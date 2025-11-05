@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int       @id @default(autoincrement())
+  email             String    @unique @db.VarChar(255)
+  passwordHash      String    @map("password_hash") @db.VarChar(255)
+  fullName          String    @map("full_name") @db.VarChar(255)
+  minecraftUsername String    @unique @map("minecraft_username") @db.VarChar(16)
+  realName          String?   @map("real_name") @db.VarChar(100)
+  yearGroup         Int?      @map("year_group")
+  rankColor         String?   @map("rank_color") @db.VarChar(20)
+  isAdmin           Boolean   @default(false) @map("is_admin")
+  verified          Boolean   @default(false)
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  reportsMade       Report[]  @relation("ReporterReports")
+  reportsReceived   Report[]  @relation("ReportedReports")
+
+  @@index([minecraftUsername])
+  @@index([email])
+  @@index([verified])
+  @@index([isAdmin])
+  @@map("users")
+}
+
+model RegistrationToken {
+  token             String   @id @db.VarChar(64)
+  minecraftUsername String   @map("minecraft_username") @db.VarChar(16)
+  expiresAt         DateTime @map("expires_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@index([minecraftUsername])
+  @@map("registration_tokens")
+}
+
+model BedrockPin {
+  id                Int      @id @default(autoincrement())
+  minecraftUsername String   @map("minecraft_username") @db.VarChar(16)
+  pin               String   @db.VarChar(6)
+  expiresAt         DateTime @map("expires_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@index([pin])
+  @@index([minecraftUsername])
+  @@index([expiresAt])
+  @@map("bedrock_pins")
+}
+
+model Report {
+  id                Int      @id @default(autoincrement())
+  reporterId        Int      @map("reporter_id")
+  reportedId        Int      @map("reported_id")
+  description       String   @db.Text
+  status            String   @default("open") @db.VarChar(20)
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  reporter          User     @relation("ReporterReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported          User     @relation("ReportedReports", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([reportedId])
+  @@index([status])
+  @@map("reports")
+}
+
+model Ban {
+  id                Int       @id @default(autoincrement())
+  minecraftUsername String    @map("minecraft_username") @db.VarChar(16)
+  bannedBy          String    @map("banned_by") @db.VarChar(16)
+  reason            String?   @db.Text
+  isPermanent       Boolean   @default(false) @map("is_permanent")
+  expiresAt         DateTime? @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  @@index([minecraftUsername])
+  @@index([expiresAt])
+  @@map("bans")
+}

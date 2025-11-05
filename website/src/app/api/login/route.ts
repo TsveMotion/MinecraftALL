@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
@@ -46,10 +47,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Update last login timestamp
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || request.ip || undefined
+
+    // Update last login metadata (using any to bypass TypeScript until Prisma regenerates)
     await prisma.user.update({
       where: { minecraftUsername },
-      data: { lastLoginAt: new Date() },
+      data: {
+        lastLoginAt: new Date(),
+        isOnline: true,
+        lastLoginIp: clientIp ?? null,
+      } as any,
     })
 
     // Set session cookie

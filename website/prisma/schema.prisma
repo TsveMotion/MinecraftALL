@@ -16,22 +16,28 @@ model User {
   passwordHash      String    @map("password_hash") @db.VarChar(255)
   fullName          String    @map("full_name") @db.VarChar(255)
   minecraftUsername String    @unique @map("minecraft_username") @db.VarChar(16)
+  minecraftUuid     String?   @map("minecraft_uuid") @db.VarChar(36)
   realName          String?   @map("real_name") @db.VarChar(100)
   yearGroup         Int?      @map("year_group")
   rankColor         String?   @map("rank_color") @db.VarChar(20)
   isAdmin           Boolean   @default(false) @map("is_admin")
   verified          Boolean   @default(false)
   lastLoginAt       DateTime? @map("last_login_at")
+  lastLoginIp       String?   @map("last_login_ip") @db.VarChar(45)
+  isOnline          Boolean   @default(false) @map("is_online")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
 
   reportsMade       Report[]  @relation("ReporterReports")
   reportsReceived   Report[]  @relation("ReportedReports")
+  admin             Admin?
+  roles             UserRole[]
 
   @@index([minecraftUsername])
   @@index([email])
   @@index([verified])
   @@index([isAdmin])
+  @@index([minecraftUuid])
   @@map("users")
 }
 
@@ -88,4 +94,54 @@ model Ban {
   @@index([minecraftUsername])
   @@index([expiresAt])
   @@map("bans")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("admins")
+}
+
+model Mute {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  mutedBy   Int       @map("muted_by")
+  reason    String?   @db.Text
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("mutes")
+}
+
+model Role {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(50)
+  isPaid    Boolean    @default(false) @map("is_paid")
+  price     Int?       // in GBP pennies (e.g., 500 = £5.00)
+  color     String?    @db.VarChar(20)
+  createdAt DateTime   @default(now()) @map("created_at")
+  users     UserRole[]
+
+  @@index([name])
+  @@map("roles")
+}
+
+model UserRole {
+  userId     Int      @map("user_id")
+  roleId     Int      @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
 }

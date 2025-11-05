@@ -6,7 +6,7 @@ import { parseEmailData } from '@/lib/userUtils'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { token, pin, fullName, email, password } = body
+    const { token, pin, fullName, username, password } = body
 
     // Must have either token OR pin
     if (!token && !pin) {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate input
-    if (!fullName || !email || !password) {
+    if (!fullName || !username || !password) {
       return NextResponse.json(
         { error: 'All fields are required' },
         { status: 400 }
@@ -32,14 +32,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
+    // Validate username pattern: YY-lastname-firstinitial
+    const usernamePattern = /^(2[0-9])-([a-z]+)-([a-z])$/
+    if (!usernamePattern.test(username)) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { error: 'Username must follow format: YY-lastname-firstinitial (e.g., 20-tsvetanov-k)' },
         { status: 400 }
       )
     }
+
+    // Auto-generate email from username
+    const email = `${username}@thestreetlyacademy.co.uk`
 
     let minecraftUsername: string
 

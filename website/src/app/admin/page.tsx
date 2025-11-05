@@ -5,18 +5,35 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Search, Shield, UserX, Ban, Clock, Loader2 } from 'lucide-react'
+import { AlertCircle, Search, Shield, Ban, Clock, Loader2, Wifi, WifiOff, VolumeX, Users, Award, UserPlus, UserMinus } from 'lucide-react'
 import { getYearGroupName } from '@/lib/userUtils'
+
+interface Role {
+  id: number
+  name: string
+  color: string | null
+  isPaid: boolean
+}
+
+interface UserRole {
+  role: Role
+}
 
 interface User {
   id: number
   minecraftUsername: string
+  minecraftUuid: string | null
   email: string
   fullName: string
   realName: string | null
   yearGroup: number | null
-  createdAt: string
   lastLoginAt: string | null
+  lastLoginIp: string | null
+  isOnline: boolean
+  isAdmin: boolean
+  admin: any
+  roles: UserRole[]
+  createdAt: string
 }
 
 interface Report {
@@ -51,7 +68,11 @@ export default function AdminPage() {
   const [banModalUser, setBanModalUser] = useState<User | null>(null)
   const [banDuration, setBanDuration] = useState('')
   const [banReason, setBanReason] = useState('')
-  const [activeTab, setActiveTab] = useState<'users' | 'reports'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'reports' | 'roles' | 'admins'>('users')
+  const [roles, setRoles] = useState<Role[]>([])
+  const [muteModalUser, setMuteModalUser] = useState<User | null>(null)
+  const [muteDuration, setMuteDuration] = useState('')
+  const [muteReason, setMuteReason] = useState('')
 
   useEffect(() => {
     fetchUsers()
@@ -152,29 +173,45 @@ export default function AdminPage() {
     }
   }
 
-  const handleKick = async (user: User) => {
-    if (!confirm(`Are you sure you want to kick ${user.minecraftUsername}?`)) {
+  const handleMute = async (isPermanent: boolean) => {
+    if (!muteModalUser) return
+
+    const duration = isPermanent ? 0 : parseInt(muteDuration)
+    if (!isPermanent && (!duration || duration <= 0)) {
+      alert('Please enter a valid duration in hours')
       return
     }
 
-    setActionLoading({ ...actionLoading, [user.id]: 'kick' })
+    setActionLoading({ ...actionLoading, [muteModalUser.id]: 'mute' })
     try {
-      const response = await fetch('/api/admin/kick', {
+      const response = await fetch('/api/admin/mute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ minecraftUsername: user.minecraftUsername }),
+        body: JSON.stringify({
+          minecraftUsername: muteModalUser.minecraftUsername,
+          reason: muteReason || 'No reason provided',
+          isPermanent,
+          durationHours: isPermanent ? null : duration,
+        }),
       })
 
       const data = await response.json()
       if (response.ok) {
-        alert(`${user.minecraftUsername} has been kicked from the server`)
+        alert(
+          `${muteModalUser.minecraftUsername} has been ${
+            isPermanent ? 'permanently muted' : `muted for ${duration} hours`
+          }`
+        )
+        setMuteModalUser(null)
+        setMuteDuration('')
+        setMuteReason('')
       } else {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      alert('Failed to kick player')
+      alert('Failed to mute player')
     } finally {
-      setActionLoading({ ...actionLoading, [user.id]: '' })
+      setActionLoading({ ...actionLoading, [muteModalUser.id]: '' })
     }
   }
 
@@ -285,23 +322,47 @@ export default function AdminPage() {
         <div className="flex gap-2 border-b border-slate-700">
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-6 py-3 font-semibold transition-colors ${
+            className={`px-6 py-3 font-semibold transition-colors flex items-center gap-2 ${
               activeTab === 'users'
                 ? 'text-purple-400 border-b-2 border-purple-400'
                 : 'text-slate-400 hover:text-slate-300'
             }`}
           >
+            <Users className="w-4 h-4" />
             Players ({filteredUsers.length})
           </button>
           <button
             onClick={() => setActiveTab('reports')}
-            className={`px-6 py-3 font-semibold transition-colors ${
+            className={`px-6 py-3 font-semibold transition-colors flex items-center gap-2 ${
               activeTab === 'reports'
                 ? 'text-purple-400 border-b-2 border-purple-400'
                 : 'text-slate-400 hover:text-slate-300'
             }`}
           >
+            <AlertCircle className="w-4 h-4" />
             Reports ({filteredReports.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('roles')}
+            className={`px-6 py-3 font-semibold transition-colors flex items-center gap-2 ${
+              activeTab === 'roles'
+                ? 'text-purple-400 border-b-2 border-purple-400'
+                : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <Award className="w-4 h-4" />
+            Roles
+          </button>
+          <button
+            onClick={() => setActiveTab('admins')}
+            className={`px-6 py-3 font-semibold transition-colors flex items-center gap-2 ${
+              activeTab === 'admins'
+                ? 'text-purple-400 border-b-2 border-purple-400'
+                : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            Admins
           </button>
         </div>
 
@@ -357,12 +418,11 @@ export default function AdminPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-700">
-                    <th className="text-left p-3 text-slate-400 font-semibold">Username</th>
-                    <th className="text-left p-3 text-slate-400 font-semibold">Real Name</th>
-                    <th className="text-left p-3 text-slate-400 font-semibold">Email</th>
-                    <th className="text-left p-3 text-slate-400 font-semibold">Year Group</th>
-                    <th className="text-left p-3 text-slate-400 font-semibold">Joined</th>
+                    <th className="text-left p-3 text-slate-400 font-semibold">Player</th>
+                    <th className="text-left p-3 text-slate-400 font-semibold">Status</th>
+                    <th className="text-left p-3 text-slate-400 font-semibold">Roles</th>
                     <th className="text-left p-3 text-slate-400 font-semibold">Last Login</th>
+                    <th className="text-left p-3 text-slate-400 font-semibold">IP Address</th>
                     <th className="text-right p-3 text-slate-400 font-semibold">Actions</th>
                   </tr>
                 </thead>
@@ -370,29 +430,63 @@ export default function AdminPage() {
                   {filteredUsers.map((user) => (
                     <tr key={user.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
                       <td className="p-3">
-                        <span className="text-white font-mono">{user.minecraftUsername}</span>
+                        <div>
+                          <div className="text-white font-mono">{user.minecraftUsername}</div>
+                          <div className="text-slate-400 text-xs">{user.realName || user.fullName}</div>
+                        </div>
                       </td>
                       <td className="p-3">
-                        <span className="text-slate-300">{user.realName || user.fullName}</span>
+                        <div className="flex flex-col gap-1">
+                          {user.isOnline ? (
+                            <span className="inline-flex items-center gap-1 text-green-400 text-sm">
+                              <Wifi className="w-3 h-3" />
+                              Online
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-slate-500 text-sm">
+                              <WifiOff className="w-3 h-3" />
+                              Offline
+                            </span>
+                          )}
+                          {(user.isAdmin || user.admin) && (
+                            <span className="inline-flex items-center gap-1 text-purple-400 text-xs">
+                              <Shield className="w-3 h-3" />
+                              Admin
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-3">
-                        <span className="text-slate-400 text-sm">{user.email}</span>
-                      </td>
-                      <td className="p-3">
-                        <span className="text-slate-300">
-                          {user.yearGroup ? getYearGroupName(user.yearGroup) : 'N/A'}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <span className="text-slate-400 text-sm">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {user.roles && user.roles.length > 0 ? (
+                            user.roles.map((userRole) => (
+                              <span 
+                                key={userRole.role.id}
+                                className="text-xs px-2 py-1 rounded border"
+                                style={{ 
+                                  backgroundColor: userRole.role.color ? `${userRole.role.color}20` : '#334155',
+                                  borderColor: userRole.role.color ? `${userRole.role.color}50` : '#475569',
+                                  color: userRole.role.color || '#94a3b8'
+                                }}
+                              >
+                                {userRole.role.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-slate-500 text-xs">No roles</span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-3">
                         <span className="text-slate-400 text-sm">
                           {user.lastLoginAt
-                            ? new Date(user.lastLoginAt).toLocaleDateString()
+                            ? new Date(user.lastLoginAt).toLocaleString()
                             : 'Never'}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className="text-slate-400 text-xs font-mono">
+                          {user.lastLoginIp || 'N/A'}
                         </span>
                       </td>
                       <td className="p-3">
@@ -400,18 +494,16 @@ export default function AdminPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleKick(user)}
+                            onClick={() => {
+                              setMuteModalUser(user)
+                              setMuteReason('')
+                              setMuteDuration('')
+                            }}
                             disabled={!!actionLoading[user.id]}
                             className="bg-orange-900/20 hover:bg-orange-900/40 border-orange-500/50 text-orange-400"
                           >
-                            {actionLoading[user.id] === 'kick' ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <>
-                                <UserX className="w-4 h-4 mr-1" />
-                                Kick
-                              </>
-                            )}
+                            <VolumeX className="w-4 h-4 mr-1" />
+                            Mute
                           </Button>
                           <Button
                             size="sm"
@@ -560,7 +652,149 @@ export default function AdminPage() {
           </CardContent>
         </Card>
         )}
+
+        {/* Roles Tab */}
+        {activeTab === 'roles' && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center justify-between">
+              <span>Role Management</span>
+              <Button
+                onClick={() => {/* TODO: Open create role modal */}}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                Create Role
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-16 space-y-4">
+              <Award className="w-16 h-16 text-slate-600 mx-auto" />
+              <div>
+                <h3 className="text-white text-lg font-semibold mb-2">Role System Coming Soon</h3>
+                <p className="text-slate-400">
+                  The role management system is under development.
+                </p>
+                <p className="text-slate-500 text-sm mt-2">
+                  You'll be able to create, edit, and assign roles to players here.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
+        {/* Admins Tab */}
+        {activeTab === 'admins' && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Admin Management</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="bg-purple-900/20 border border-purple-500/30 p-4 rounded-lg">
+                <h3 className="text-purple-400 font-semibold mb-2 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Primary Administrator
+                </h3>
+                <p className="text-slate-300 text-sm">
+                  <strong>20-tsvetanov-k@thestreetlyacademy.co.uk</strong>
+                </p>
+                <p className="text-slate-400 text-xs mt-1">
+                  This account has permanent admin access and cannot be removed.
+                </p>
+              </div>
+
+              <div className="text-center py-12 space-y-4">
+                <Users className="w-16 h-16 text-slate-600 mx-auto" />
+                <div>
+                  <h3 className="text-white text-lg font-semibold mb-2">Additional Admin Management</h3>
+                  <p className="text-slate-400">
+                    Admin promotion system is under development.
+                  </p>
+                  <p className="text-slate-500 text-sm mt-2">
+                    You'll be able to promote/demote users to admin status here.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        )}
       </div>
+
+      {/* Mute Modal */}
+      {muteModalUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Mute {muteModalUser.minecraftUsername}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-white text-sm">Reason</label>
+                <Input
+                  type="text"
+                  placeholder="Enter mute reason..."
+                  value={muteReason}
+                  onChange={(e) => setMuteReason(e.target.value)}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white text-sm">Duration (hours)</label>
+                <Input
+                  type="number"
+                  placeholder="Enter duration in hours (leave empty for permanent)"
+                  value={muteDuration}
+                  onChange={(e) => setMuteDuration(e.target.value)}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => handleMute(false)}
+                  disabled={!!actionLoading[muteModalUser.id] || !muteDuration}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700"
+                >
+                  {actionLoading[muteModalUser.id] === 'mute' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Clock className="w-4 h-4 mr-2" />
+                      Temp Mute
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={() => handleMute(true)}
+                  disabled={!!actionLoading[muteModalUser.id]}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                >
+                  {actionLoading[muteModalUser.id] === 'mute' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <VolumeX className="w-4 h-4 mr-2" />
+                      Permanent
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={() => setMuteModalUser(null)}
+                  variant="outline"
+                  className="bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Ban Modal */}
       {banModalUser && (

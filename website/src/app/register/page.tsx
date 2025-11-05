@@ -14,6 +14,7 @@ export default function RegisterPage() {
 
   const [formData, setFormData] = useState({
     fullName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -28,6 +29,22 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false)
   const [usingPin, setUsingPin] = useState(false)
   const [pinVerified, setPinVerified] = useState(false)
+
+  // Auto-generate email when username changes
+  const handleUsernameChange = (username: string) => {
+    const lowerUsername = username.toLowerCase()
+    setFormData({
+      ...formData,
+      username: lowerUsername,
+      email: lowerUsername ? `${lowerUsername}@thestreetlyacademy.co.uk` : ''
+    })
+  }
+
+  // Validate username pattern: YY-lastname-firstinitial
+  const validateUsername = (username: string): boolean => {
+    const pattern = /^(2[0-9])-([a-z]+)-([a-z])$/
+    return pattern.test(username)
+  }
 
   // Validate token on mount (if token exists) or check for PIN from homepage
   useEffect(() => {
@@ -119,7 +136,7 @@ export default function RegisterPage() {
     setLoading(true)
 
     // Basic validation
-    if (!formData.email || !formData.fullName || !formData.password || !formData.confirmPassword) {
+    if (!formData.username || !formData.fullName || !formData.password || !formData.confirmPassword) {
       setError('All fields are required')
       setLoading(false)
       return
@@ -132,9 +149,9 @@ export default function RegisterPage() {
       return
     }
 
-    // Validate email domain
-    if (!formData.email.endsWith('@thestreetlyacademy.co.uk')) {
-      setError('Only @thestreetlyacademy.co.uk email addresses are allowed')
+    // Validate username pattern
+    if (!validateUsername(formData.username)) {
+      setError('Username must follow format: YY-lastname-firstinitial (e.g., 20-tsvetanov-k)')
       setLoading(false)
       return
     }
@@ -160,7 +177,7 @@ export default function RegisterPage() {
           token: usingPin ? undefined : token,
           pin: usingPin ? formData.pin : undefined,
           fullName: formData.fullName,
-          email: formData.email,
+          username: formData.username,
           password: formData.password,
         }),
       })
@@ -319,6 +336,34 @@ export default function RegisterPage() {
           ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="username" className="text-white">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                required
+                value={formData.username}
+                onChange={(e) => handleUsernameChange(e.target.value)}
+                className="bg-slate-900/50 border-slate-600 text-white"
+                placeholder="20-tsvetanov-k"
+              />
+              <p className="text-xs text-slate-400">
+                Format: YY-lastname-firstinitial (e.g., 20-tsvetanov-k)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white">Email Address (Auto-generated)</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                readOnly
+                className="bg-slate-900/70 border-slate-600 text-slate-400 cursor-not-allowed"
+                placeholder="Email will be generated from username"
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="fullName" className="text-white">Full Name</Label>
               <Input
                 id="fullName"
@@ -327,20 +372,7 @@ export default function RegisterPage() {
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 className="bg-slate-900/50 border-slate-600 text-white"
-                placeholder="John Doe"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-white">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="bg-slate-900/50 border-slate-600 text-white"
-                placeholder="john@example.com"
+                placeholder="Kristiyan Tsvetanov"
               />
             </div>
 

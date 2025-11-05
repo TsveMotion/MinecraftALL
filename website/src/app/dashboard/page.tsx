@@ -5,19 +5,35 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, CheckCircle2, Loader2, LogOut, User, Mail, Hash, Shield } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, LogOut, User, Mail, Hash, Shield, Wifi, WifiOff, Clock, MapPin } from 'lucide-react'
 import { getYearGroupName } from '@/lib/userUtils'
+
+interface Role {
+  role: {
+    id: number
+    name: string
+    color: string | null
+    isPaid: boolean
+  }
+}
 
 interface UserProfile {
   id: number
   minecraftUsername: string
+  minecraftUuid: string | null
   email: string
   fullName: string
   realName: string | null
   yearGroup: number | null
   rankColor: string | null
   isAdmin: boolean
+  lastLoginAt: string | null
+  lastLoginIp: string | null
+  isOnline: boolean
+  roles: Role[]
+  admin: any
 }
 
 export default function DashboardPage() {
@@ -156,15 +172,59 @@ export default function DashboardPage() {
               Player Profile
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+          <CardContent className="space-y-6">
+            {/* Status & Roles Row */}
+            <div className="flex flex-wrap gap-2">
+              {user.isOnline ? (
+                <Badge variant="success" className="flex items-center gap-1">
+                  <Wifi className="w-3 h-3" />
+                  ONLINE
+                </Badge>
+              ) : (
+                <Badge className="flex items-center gap-1 bg-slate-700 text-slate-400">
+                  <WifiOff className="w-3 h-3" />
+                  OFFLINE
+                </Badge>
+              )}
+              
+              {(user.isAdmin || user.admin) && (
+                <Badge variant="purple" className="flex items-center gap-1">
+                  <Shield className="w-3 h-3" />
+                  ADMIN
+                </Badge>
+              )}
+
+              {user.roles && user.roles.length > 0 && user.roles.map((userRole) => (
+                <Badge 
+                  key={userRole.role.id}
+                  className="border"
+                  style={{ 
+                    backgroundColor: userRole.role.color ? `${userRole.role.color}20` : undefined,
+                    borderColor: userRole.role.color ? `${userRole.role.color}50` : undefined,
+                    color: userRole.role.color || undefined
+                  }}
+                >
+                  {userRole.role.name}
+                </Badge>
+              ))}
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <Label className="text-slate-400">Minecraft Username</Label>
+                  <Label className="text-slate-400 text-sm">Minecraft Username</Label>
                   <p className="text-white text-lg font-mono">{user.minecraftUsername}</p>
                 </div>
+
+                {user.minecraftUuid && (
+                  <div>
+                    <Label className="text-slate-400 text-sm">Minecraft UUID</Label>
+                    <p className="text-slate-300 text-xs font-mono break-all">{user.minecraftUuid}</p>
+                  </div>
+                )}
+
                 <div>
-                  <Label className="text-slate-400">Display Name (In-Game)</Label>
+                  <Label className="text-slate-400 text-sm">Display Name (In-Game)</Label>
                   <p className="text-white text-lg font-semibold">
                     {user.realName && user.yearGroup && user.rankColor && (
                       <>
@@ -172,51 +232,69 @@ export default function DashboardPage() {
                         {' '}
                         <span style={{ color: user.rankColor }}>{user.realName}</span>
                         {' '}
-                        <span className="text-slate-400">({user.minecraftUsername})</span>
+                        <span className="text-slate-400 text-sm">({user.minecraftUsername})</span>
                       </>
                     )}
                     {!user.realName && user.minecraftUsername}
                   </p>
                 </div>
+
                 <div>
-                  <Label className="text-slate-400">Email</Label>
-                  <p className="text-white">{user.email}</p>
-                </div>
-                <div>
-                  <Label className="text-slate-400">Full Name</Label>
+                  <Label className="text-slate-400 text-sm">Full Name</Label>
                   <p className="text-white">{user.fullName}</p>
                 </div>
-              </div>
 
-              {user.yearGroup && (
-                <div className="space-y-2">
-                  <Label className="text-slate-400 text-sm">Year Group</Label>
-                  <div 
-                    className="font-semibold" 
-                    style={{ color: user.rankColor || '#FFFFFF' }}
-                  >
-                    {getYearGroupName(user.yearGroup)}
+                <div>
+                  <Label className="text-slate-400 text-sm">Email</Label>
+                  <div className="flex items-center gap-2 text-white">
+                    <Mail className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm">{user.email}</span>
                   </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label className="text-slate-400 text-sm">Email</Label>
-                <div className="flex items-center gap-2 text-white">
-                  <Mail className="w-4 h-4 text-green-400" />
-                  <span className="text-sm">{user.email}</span>
                 </div>
               </div>
 
-              {user.isAdmin && (
-                <div className="space-y-2">
-                  <Label className="text-slate-400 text-sm">Role</Label>
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-purple-400" />
-                    <span className="text-purple-400 font-semibold">Administrator</span>
+              <div className="space-y-4">
+                {user.yearGroup && (
+                  <div>
+                    <Label className="text-slate-400 text-sm">Year Group</Label>
+                    <div 
+                      className="font-semibold text-lg" 
+                      style={{ color: user.rankColor || '#FFFFFF' }}
+                    >
+                      {getYearGroupName(user.yearGroup)}
+                    </div>
                   </div>
+                )}
+
+                {user.lastLoginAt && (
+                  <div>
+                    <Label className="text-slate-400 text-sm">Last Login</Label>
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Clock className="w-4 h-4 text-green-400" />
+                      <span className="text-sm">
+                        {new Date(user.lastLoginAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {user.lastLoginIp && (
+                  <div>
+                    <Label className="text-slate-400 text-sm">Last IP Address</Label>
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <MapPin className="w-4 h-4 text-orange-400" />
+                      <span className="text-sm font-mono">{user.lastLoginIp}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-slate-400 text-sm">Account Created</Label>
+                  <p className="text-slate-300 text-sm">
+                    {new Date(user.lastLoginAt || Date.now()).toLocaleDateString()}
+                  </p>
                 </div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>

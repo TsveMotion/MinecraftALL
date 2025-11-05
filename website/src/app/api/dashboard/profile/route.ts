@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         minecraftUsername: true,
+        minecraftUuid: true,
         email: true,
         fullName: true,
         realName: true,
@@ -27,7 +28,15 @@ export async function GET(request: NextRequest) {
         rankColor: true,
         isAdmin: true,
         lastLoginAt: true,
+        lastLoginIp: true,
+        isOnline: true,
         createdAt: true,
+        admin: true,
+        roles: {
+          include: {
+            role: true
+          }
+        }
       },
     })
 

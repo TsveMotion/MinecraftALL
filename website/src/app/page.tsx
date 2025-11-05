@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Copy, Check, Server, ExternalLink, Shield, Zap, Users, Activity, Wifi, KeyRound } from 'lucide-react'
+import { Copy, Check, Server, ExternalLink, Shield, Zap, Users, Activity, Wifi, KeyRound, Gamepad2, Smartphone, Monitor, UserCheck } from 'lucide-react'
 
 const SERVER_IP = process.env.NEXT_PUBLIC_MINECRAFT_SERVER || 'Play.tsvweb.co.uk'
 
@@ -18,17 +19,32 @@ interface ServerStatus {
   error?: string
 }
 
+interface OnlinePlayer {
+  id: number
+  minecraftUsername: string
+  realName: string | null
+  yearGroup: number | null
+  rankColor: string | null
+}
+
 export default function Home() {
   const router = useRouter()
   const [copied, setCopied] = useState(false)
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null)
   const [statusLoading, setStatusLoading] = useState(true)
   const [pin, setPin] = useState('')
+  const [onlinePlayers, setOnlinePlayers] = useState<OnlinePlayer[]>([])
+  const [playersLoading, setPlayersLoading] = useState(true)
 
   useEffect(() => {
     fetchServerStatus()
-    const interval = setInterval(fetchServerStatus, 30000) // Update every 30s
-    return () => clearInterval(interval)
+    fetchOnlinePlayers()
+    const statusInterval = setInterval(fetchServerStatus, 30000) // Update every 30s
+    const playersInterval = setInterval(fetchOnlinePlayers, 15000) // Update every 15s
+    return () => {
+      clearInterval(statusInterval)
+      clearInterval(playersInterval)
+    }
   }, [])
 
   const fetchServerStatus = async () => {
@@ -42,6 +58,20 @@ export default function Home() {
       console.error('Failed to fetch server status:', error)
     } finally {
       setStatusLoading(false)
+    }
+  }
+
+  const fetchOnlinePlayers = async () => {
+    try {
+      const response = await fetch('/api/online-players')
+      if (response.ok) {
+        const data = await response.json()
+        setOnlinePlayers(data.players || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch online players:', error)
+    } finally {
+      setPlayersLoading(false)
     }
   }
 
@@ -170,136 +200,233 @@ export default function Home() {
           </Card>
         </div>
 
-        {/* Bedrock PIN Entry - Quick Access */}
-        <Card className="bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-purple-500/50 backdrop-blur-sm shadow-2xl shadow-purple-900/30">
+        {/* Online Players List */}
+        <Card className="bg-slate-900/70 border-emerald-500/30 backdrop-blur-md shadow-2xl">
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/30 rounded-lg">
-                <KeyRound className="w-6 h-6 text-purple-300" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <UserCheck className="w-6 h-6 text-emerald-400" />
+                <div>
+                  <CardTitle className="text-white text-xl">Players Online</CardTitle>
+                  <CardDescription className="text-slate-400">
+                    {onlinePlayers.length} {onlinePlayers.length === 1 ? 'player' : 'players'} currently playing
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-white text-xl">Bedrock Players</CardTitle>
-                <CardDescription className="text-purple-200">
-                  Enter your 6-digit PIN to register
-                </CardDescription>
-              </div>
+              <Badge variant="success" className="text-sm px-3 py-1">
+                LIVE
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handlePinSubmit} className="space-y-3">
-              <div className="bg-slate-950/60 p-4 rounded-xl border border-purple-500/30">
-                <Input
-                  type="text"
-                  maxLength={6}
-                  value={pin}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '')
-                    setPin(value)
-                  }}
-                  placeholder="000000"
-                  className="text-center text-3xl tracking-widest font-mono bg-slate-900/50 border-purple-400/50 text-white placeholder:text-slate-600 focus:border-purple-400"
-                />
+            {playersLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto"></div>
+                <p className="text-slate-400 text-sm mt-3">Loading players...</p>
               </div>
-              <div className="space-y-2 text-sm text-purple-200">
-                <p className="flex items-start gap-2">
-                  <span className="text-purple-400">•</span>
-                  <span>Run <code className="bg-slate-950/60 px-2 py-0.5 rounded text-purple-300">/register</code> in-game to get your PIN</span>
-                </p>
-                <p className="flex items-start gap-2">
-                  <span className="text-purple-400">•</span>
-                  <span>Enter the 6-digit PIN above</span>
-                </p>
-                <p className="flex items-start gap-2">
-                  <span className="text-purple-400">•</span>
-                  <span>Complete registration on the next page</span>
-                </p>
+            ) : onlinePlayers.length > 0 ? (
+              <div className="max-h-64 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                {onlinePlayers.map((player) => (
+                  <div 
+                    key={player.id}
+                    className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-emerald-500/30 transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                      <div>
+                        <p className="text-white font-mono text-sm">{player.minecraftUsername}</p>
+                        {player.realName && (
+                          <p className="text-slate-400 text-xs">{player.realName}</p>
+                        )}
+                      </div>
+                    </div>
+                    {player.yearGroup && (
+                      <Badge 
+                        className="text-xs"
+                        style={{
+                          backgroundColor: player.rankColor ? `${player.rankColor}30` : undefined,
+                          borderColor: player.rankColor ? `${player.rankColor}60` : undefined,
+                          color: player.rankColor || undefined
+                        }}
+                      >
+                        Year {player.yearGroup}
+                      </Badge>
+                    )}
+                  </div>
+                ))}
               </div>
-              <Button 
-                type="submit"
-                disabled={pin.length !== 6}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-slate-700 disabled:to-slate-700 shadow-lg shadow-purple-500/30 transform hover:scale-105 transition-all text-lg py-6"
-              >
-                Continue with PIN →
-              </Button>
-            </form>
+            ) : (
+              <div className="text-center py-8 space-y-2">
+                <Users className="w-12 h-12 text-slate-600 mx-auto" />
+                <p className="text-slate-400">No players online right now</p>
+                <p className="text-slate-500 text-sm">Be the first to join!</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Navigation Cards - Enhanced */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-          <Card className="bg-slate-800/40 border-slate-700/50 backdrop-blur-sm hover:border-blue-500/50 hover:bg-slate-800/60 transition-all duration-300 transform hover:-translate-y-1 shadow-xl">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <Users className="w-6 h-6 text-blue-400" />
+        {/* How to Join - Clear Instructions for Both Editions */}
+        <div className="space-y-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+            How to Join
+          </h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            {/* JAVA EDITION */}
+            <Card className="bg-gradient-to-br from-blue-900/40 to-cyan-900/40 border-blue-500/50 backdrop-blur-sm shadow-2xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-500/30 rounded-lg">
+                    <Monitor className="w-6 h-6 text-blue-300" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white text-xl flex items-center gap-2">
+                      JAVA Edition
+                      <Badge variant="info" className="text-xs">PC/Mac/Linux</Badge>
+                    </CardTitle>
+                    <CardDescription className="text-blue-200">
+                      For computers & laptops
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-white text-xl">New Players</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    First time joining? Start here
-                  </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+                    <div className="flex-1">
+                      <p className="text-blue-100 font-semibold text-sm mb-1">Join the Server</p>
+                      <p className="text-blue-200/80 text-sm">Add server: <code className="bg-slate-950/60 px-2 py-1 rounded text-blue-300">{SERVER_IP}</code></p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+                    <div className="flex-1">
+                      <p className="text-blue-100 font-semibold text-sm mb-1">Get Registration Link</p>
+                      <p className="text-blue-200/80 text-sm">Type: <code className="bg-slate-950/60 px-2 py-1 rounded text-blue-300">/register</code></p>
+                      <p className="text-blue-300/60 text-xs mt-1">You'll receive a clickable link in chat</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
+                    <div className="flex-1">
+                      <p className="text-blue-100 font-semibold text-sm mb-1">Complete Registration</p>
+                      <p className="text-blue-200/80 text-sm">Click the link and fill out the form</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
+                    <div className="flex-1">
+                      <p className="text-blue-100 font-semibold text-sm mb-1">Start Playing!</p>
+                      <p className="text-blue-200/80 text-sm">Login: <code className="bg-slate-950/60 px-2 py-1 rounded text-blue-300">/login &lt;password&gt;</code></p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
-                  <p className="text-slate-300 text-sm pt-1">Join the Minecraft server</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
-                  <p className="text-slate-300 text-sm pt-1">Type <code className="bg-slate-950 px-2 py-1 rounded text-blue-400 font-mono">/register</code></p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
-                  <p className="text-slate-300 text-sm pt-1">Click your unique registration link</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
-                  <p className="text-slate-300 text-sm pt-1">Complete the form and start playing!</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-slate-800/40 border-slate-700/50 backdrop-blur-sm hover:border-green-500/50 hover:bg-slate-800/60 transition-all duration-300 transform hover:-translate-y-1 shadow-xl">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <Shield className="w-6 h-6 text-green-400" />
+            {/* BEDROCK EDITION */}
+            <Card className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 border-purple-500/50 backdrop-blur-sm shadow-2xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/30 rounded-lg">
+                    <Smartphone className="w-6 h-6 text-purple-300" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-white text-xl flex items-center gap-2">
+                      BEDROCK Edition
+                      <Badge variant="purple" className="text-xs">Mobile/Console</Badge>
+                    </CardTitle>
+                    <CardDescription className="text-purple-200">
+                      For phones, tablets, Xbox, PlayStation, Switch
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-white text-xl">Existing Players</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    Already registered? Welcome back
-                  </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+                    <div className="flex-1">
+                      <p className="text-purple-100 font-semibold text-sm mb-1">Join the Server</p>
+                      <p className="text-purple-200/80 text-sm">Server: <code className="bg-slate-950/60 px-2 py-1 rounded text-purple-300">{SERVER_IP}</code></p>
+                      <p className="text-purple-300/60 text-xs mt-1">Port: <code className="bg-slate-950/60 px-1 py-0.5 rounded text-purple-300">19132</code></p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+                    <div className="flex-1">
+                      <p className="text-purple-100 font-semibold text-sm mb-1">Get Your PIN</p>
+                      <p className="text-purple-200/80 text-sm">Type: <code className="bg-slate-950/60 px-2 py-1 rounded text-purple-300">/register</code></p>
+                      <p className="text-purple-300/60 text-xs mt-1">You'll receive a 6-digit PIN code</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
+                    <div className="flex-1">
+                      <p className="text-purple-100 font-semibold text-sm mb-1">Enter PIN Below</p>
+                      <form onSubmit={handlePinSubmit} className="space-y-2 mt-2">
+                        <Input
+                          type="text"
+                          maxLength={6}
+                          value={pin}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '')
+                            setPin(value)
+                          }}
+                          placeholder="000000"
+                          className="text-center text-2xl tracking-widest font-mono bg-slate-900/50 border-purple-400/50 text-white placeholder:text-slate-600"
+                        />
+                        <Button 
+                          type="submit"
+                          disabled={pin.length !== 6}
+                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-700 disabled:to-slate-700"
+                          size="sm"
+                        >
+                          Continue →
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
+                    <div className="flex-1">
+                      <p className="text-purple-100 font-semibold text-sm mb-1">Complete & Play!</p>
+                      <p className="text-purple-200/80 text-sm">Fill out the form and start playing</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="bg-slate-950/40 p-3 rounded-lg border border-green-500/20">
-                  <p className="text-slate-300 text-sm mb-1">
-                    <strong className="text-green-400">In-Game Login:</strong>
-                  </p>
-                  <code className="text-green-400 bg-slate-950/60 px-3 py-2 rounded font-mono text-sm block">/login &lt;password&gt;</code>
-                </div>
-                <div className="bg-slate-950/40 p-3 rounded-lg border border-blue-500/20">
-                  <p className="text-slate-300 text-sm mb-2">
-                    <strong className="text-blue-400">Web Dashboard:</strong>
-                  </p>
-                  <Link href="/login">
-                    <Button className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg shadow-green-500/30 transform hover:scale-105 transition-all">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Access Dashboard
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        {/* Existing Players - Quick Access */}
+        <Card className="bg-slate-800/40 border-green-500/30 backdrop-blur-sm shadow-xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-white text-xl flex items-center justify-center gap-2">
+              <Shield className="w-6 h-6 text-green-400" />
+              Already Registered?
+            </CardTitle>
+            <CardDescription className="text-slate-400">
+              Access your dashboard or login in-game
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-950/40 p-4 rounded-lg border border-green-500/20 text-center">
+                <p className="text-green-400 font-semibold mb-2">In-Game Login</p>
+                <code className="text-green-300 bg-slate-950/60 px-3 py-2 rounded font-mono text-sm">/login &lt;password&gt;</code>
+              </div>
+              <Link href="/login" className="block">
+                <Button className="w-full h-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg transform hover:scale-105 transition-all">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Web Dashboard
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Features Section - Enhanced */}
         <Card className="bg-slate-800/40 border-slate-700/50 backdrop-blur-sm shadow-xl">

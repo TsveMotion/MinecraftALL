@@ -1,0 +1,94 @@
+# --------------------------------
+# Streetly SMP Geyser Config
+# Java + Bedrock Crossplay Enabled
+# --------------------------------
+
+bedrock:
+  address: 0.0.0.0
+  port: 19132
+  clone-remote-port: false
+  motd1: "§6§lStreetly SMP"
+  motd2: "§fJava + Bedrock Crossplay | §eTsvWeb.co.uk"
+  server-name: "Streetly SMP"
+  compression-level: 6
+  enable-proxy-protocol: false
+
+remote:
+  address: 127.0.0.1  # Use localhost since Geyser is on same server
+  port: 25565
+  auth-type: floodgate  # Let Floodgate handle Bedrock auth
+  use-proxy-protocol: false
+  forward-hostname: false
+
+# Floodgate key file location
+floodgate-key-file: key.pem
+
+# Allow Bedrock players to join with any username
+# They'll be prefixed with "." by Floodgate
+saved-user-logins: []
+
+# Auth timeout
+pending-authentication-timeout: 120
+
+# Enable command suggestions for Bedrock
+command-suggestions: true
+
+# MOTD settings
+passthrough-motd: false  # Use custom MOTD above
+passthrough-player-counts: true
+legacy-ping-passthrough: false
+ping-passthrough-interval: 3
+
+# Network settings
+forward-player-ping: false
+max-players: 250
+
+# Debug (set to true if having issues)
+debug-mode: false
+
+# Bedrock UI settings
+show-cooldown: title
+show-coordinates: true
+
+# Bedrock-specific features
+disable-bedrock-scaffolding: false
+emote-offhand-workaround: disabled
+
+# Performance
+cache-images: 0
+
+# Custom skulls (can be expensive)
+allow-custom-skulls: true
+max-visible-custom-skulls: 128
+custom-skull-render-distance: 32
+
+# Items and world settings
+add-non-bedrock-items: true
+above-bedrock-nether-building: false
+
+# Resource packs
+force-resource-packs: false  # Don't force packs unless you have custom ones
+xbox-achievements-enabled: false  # Achievements don't work on non-featured servers
+
+# Privacy
+log-player-ip-addresses: true
+notify-on-new-bedrock-update: true
+
+# Block for unusable spaces
+unusable-space-block: minecraft:barrier
+
+# Metrics
+metrics:
+  enabled: true
+  uuid: bbc0fc67-0093-4e6f-ac45-aa1aab079c9f
+
+# Performance tuning
+scoreboard-packet-threshold: 20
+enable-proxy-connections: false
+
+# Network optimization
+mtu: 1400
+use-direct-connection: true
+disable-compression: true
+
+config-version: 4

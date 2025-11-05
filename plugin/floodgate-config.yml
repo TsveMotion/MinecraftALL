@@ -1,0 +1,22 @@
+# Floodgate Configuration for Streetly SMP
+
+# Username prefix for Bedrock players (default is ".")
+username-prefix: "."
+
+# Replace spaces in Bedrock usernames with underscores
+replace-spaces: true
+
+# Disconnect message for invalid Bedrock players
+disconnect:
+  invalid-key: "Invalid Floodgate key! Please connect through Geyser."
+  invalid-arguments-length: "Invalid connection data."
+
+# Player link settings - allows linking Java and Bedrock accounts
+player-link:
+  enabled: true
+  require-link: false  # Don't force linking since your system uses /register
+  
+# Metrics
+metrics:
+  enabled: true
+  uuid: auto

@@ -1,0 +1,55 @@
+name: MinecraftAuth
+version: '1.0.0'
+main: com.minecraftauth.MinecraftAuthPlugin
+api-version: '1.20'
+author: MinecraftAuth
+description: Authentication system for Minecraft server with Bedrock support
+website: https://github.com/yourusername/minecraft-auth
+softdepend: [floodgate]
+
+commands:
+  register:
+    description: Generate a registration link
+    usage: /register
+    permission: minecraftauth.register
+    
+  login:
+    description: Login with your password or PIN (Bedrock)
+    usage: /login <password|pin>
+    permission: minecraftauth.login
+    
+  report:
+    description: Report a player to staff
+    usage: /report <player> <description>
+    permission: minecraftauth.report
+    
+  authreload:
+    description: Reload the plugin configuration
+    usage: /authreload
+    permission: minecraftauth.admin
+    
+  links:
+    description: View helpful server links
+    usage: /links
+    permission: minecraftauth.links
+
+permissions:
+  minecraftauth.register:
+    description: Allows player to get registration link
+    default: true
+    
+  minecraftauth.login:
+    description: Allows player to login
+    default: true
+    
+  minecraftauth.report:
+    description: Allows player to report others
+    default: true
+    
+  minecraftauth.links:
+    description: Allows player to view server links
+    default: true
+    
+  minecraftauth.admin:
+    description: Admin commands
+    default: op

@@ -3,9 +3,8 @@ version: '1.0.0'
 main: com.minecraftauth.MinecraftAuthPlugin
 api-version: '1.20'
 author: MinecraftAuth
-description: Authentication system for Minecraft server with Bedrock support
-website: https://github.com/yourusername/minecraft-auth
-softdepend: [floodgate]
+description: Authentication system for Minecraft server
+website: https://streetlymc.com
 
 commands:
   register:
@@ -14,8 +13,8 @@ commands:
     permission: minecraftauth.register
     
   login:
-    description: Login with your password or PIN (Bedrock)
-    usage: /login <password|pin>
+    description: Login with your password
+    usage: /login <password>
     permission: minecraftauth.login
     
   report:
@@ -32,6 +31,11 @@ commands:
     description: View helpful server links
     usage: /links
     permission: minecraftauth.links
+    
+  mute:
+    description: Check mute status
+    usage: /mute [player]
+    permission: minecraftauth.mute
 
 permissions:
   minecraftauth.register:
@@ -49,6 +53,14 @@ permissions:
   minecraftauth.links:
     description: Allows player to view server links
     default: true
+    
+  minecraftauth.mute:
+    description: Allows player to check own mute status
+    default: true
+    
+  minecraftauth.mute.check:
+    description: Allows checking other players' mute status
+    default: op
     
   minecraftauth.admin:
     description: Admin commands

@@ -60,8 +60,8 @@ Edit `.env`:
 
 ```env
 DATABASE_URL="mysql://authuser:StrongPasswordHere@ddns.tsvweb.com:3306/minecraft_auth"
-NEXT_PUBLIC_SITE_URL=https://mc-verify.tsvweb.co.uk
-NEXT_PUBLIC_MINECRAFT_SERVER=Play.tsvweb.co.uk
+NEXT_PUBLIC_SITE_URL=https://streetlymc.com
+NEXT_PUBLIC_MINECRAFT_SERVER=play.streetlymc.com
 
 # Plugin API Configuration (for admin kick/ban actions)
 PLUGIN_API_URL=http://YOUR_SERVER_IP:8080
@@ -125,7 +125,7 @@ database:
   pool-size: 10
 
 registration:
-  website-url: https://mc-verify.tsvweb.co.uk
+  website-url: https://streetlymc.com
   token-expiry-minutes: 30
 
 # HTTP API Server Configuration

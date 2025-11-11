@@ -11,6 +11,7 @@ import com.minecraftauth.listeners.PlayerFreezeListener;
 import com.minecraftauth.listeners.PlayerJoinListener;
 import com.minecraftauth.managers.VerificationManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import uk.co.tsvweb.minecraftroles.MinecraftRoles;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -21,6 +22,7 @@ public class MinecraftAuthPlugin extends JavaPlugin {
     private DatabaseManager databaseManager;
     private HttpApiServer httpApiServer;
     private VerificationManager verificationManager;
+    private MinecraftRoles minecraftRoles;
     private final Set<UUID> authenticatedPlayers = new HashSet<>();
     private final Set<String> authenticatedPlayerNames = new HashSet<>();
     
@@ -55,11 +57,18 @@ public class MinecraftAuthPlugin extends JavaPlugin {
         httpApiServer = new HttpApiServer(this);
         httpApiServer.start();
         
+        // Initialize MinecraftRoles system
+        minecraftRoles = new MinecraftRoles(this);
+        minecraftRoles.enable();
+        
         getLogger().info("MinecraftAuth has been enabled!");
     }
     
     @Override
     public void onDisable() {
+        if (minecraftRoles != null) {
+            minecraftRoles.disable();
+        }
         if (verificationManager != null) {
             verificationManager.shutdown();
         }

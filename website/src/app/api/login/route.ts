@@ -7,19 +7,19 @@ import { cookies } from 'next/headers'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { minecraftUsername, password } = body
+    const { email, minecraftUsername, password } = body
 
     // Validate input
-    if (!minecraftUsername || !password) {
+    if ((!email && !minecraftUsername) || !password) {
       return NextResponse.json(
-        { error: 'Username and password are required' },
+        { error: 'Email/username and password are required' },
         { status: 400 }
       )
     }
 
-    // Find the user
-    const user = await prisma.user.findUnique({
-      where: { minecraftUsername },
+    // Find the user by email or minecraftUsername
+    const user = await prisma.user.findFirst({
+      where: email ? { email } : { minecraftUsername },
     })
 
     if (!user) {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Update last login metadata (using any to bypass TypeScript until Prisma regenerates)
     await prisma.user.update({
-      where: { minecraftUsername },
+      where: { id: user.id },
       data: {
         lastLoginAt: new Date(),
         isOnline: true,

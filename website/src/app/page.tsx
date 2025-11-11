@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Copy, Check, Server, ExternalLink, Shield, Zap, Users, Activity, Wifi, KeyRound, Gamepad2, Smartphone, Monitor, UserCheck } from 'lucide-react'
 
-const SERVER_IP = process.env.NEXT_PUBLIC_MINECRAFT_SERVER || 'Play.tsvweb.co.uk'
+const SERVER_IP = process.env.NEXT_PUBLIC_MINECRAFT_SERVER || 'play.streetlymc.com'
 
 interface ServerStatus {
   online: boolean
@@ -39,8 +39,8 @@ export default function Home() {
   useEffect(() => {
     fetchServerStatus()
     fetchOnlinePlayers()
-    const statusInterval = setInterval(fetchServerStatus, 30000) // Update every 30s
-    const playersInterval = setInterval(fetchOnlinePlayers, 15000) // Update every 15s
+    const statusInterval = setInterval(fetchServerStatus, 10000) // Update every 10s
+    const playersInterval = setInterval(fetchOnlinePlayers, 10000) // Update every 10s
     return () => {
       clearInterval(statusInterval)
       clearInterval(playersInterval)
@@ -108,7 +108,6 @@ export default function Home() {
             Hosted & Sponsored by TSVWEB.CO.UK
           </p>
         </div>
-
         {/* Server Status & IP Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Server IP Card */}
@@ -273,18 +272,18 @@ export default function Home() {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* JAVA EDITION */}
-            <Card className="bg-gradient-to-br from-blue-900/40 to-cyan-900/40 border-blue-500/50 backdrop-blur-sm shadow-2xl">
+            <Card className="bg-gradient-to-br from-blue-600/30 to-cyan-600/30 border-blue-400 backdrop-blur-sm shadow-2xl shadow-blue-500/20">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/30 rounded-lg">
-                    <Monitor className="w-6 h-6 text-blue-300" />
+                  <div className="p-2 bg-blue-500/40 rounded-lg">
+                    <Monitor className="w-6 h-6 text-blue-200" />
                   </div>
                   <div>
                     <CardTitle className="text-white text-xl flex items-center gap-2">
                       JAVA Edition
                       <Badge variant="info" className="text-xs">PC/Mac/Linux</Badge>
                     </CardTitle>
-                    <CardDescription className="text-blue-200">
+                    <CardDescription className="text-blue-100">
                       For computers & laptops
                     </CardDescription>
                   </div>
@@ -295,30 +294,30 @@ export default function Home() {
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
                     <div className="flex-1">
-                      <p className="text-blue-100 font-semibold text-sm mb-1">Join the Server</p>
-                      <p className="text-blue-200/80 text-sm">Add server: <code className="bg-slate-950/60 px-2 py-1 rounded text-blue-300">{SERVER_IP}</code></p>
+                      <p className="text-white font-semibold text-sm mb-1">Join the Server</p>
+                      <p className="text-blue-50 text-sm">Add server: <code className="bg-slate-950/80 px-2 py-1 rounded text-blue-200 font-mono">{SERVER_IP}</code></p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
                     <div className="flex-1">
-                      <p className="text-blue-100 font-semibold text-sm mb-1">Get Registration Link</p>
-                      <p className="text-blue-200/80 text-sm">Type: <code className="bg-slate-950/60 px-2 py-1 rounded text-blue-300">/register</code></p>
-                      <p className="text-blue-300/60 text-xs mt-1">You'll receive a clickable link in chat</p>
+                      <p className="text-white font-semibold text-sm mb-1">Get Registration Link</p>
+                      <p className="text-blue-50 text-sm">Type: <code className="bg-slate-950/80 px-2 py-1 rounded text-blue-200 font-mono">/register</code></p>
+                      <p className="text-blue-100 text-xs mt-1">You'll receive a clickable link in chat</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
                     <div className="flex-1">
-                      <p className="text-blue-100 font-semibold text-sm mb-1">Complete Registration</p>
-                      <p className="text-blue-200/80 text-sm">Click the link and fill out the form</p>
+                      <p className="text-white font-semibold text-sm mb-1">Complete Registration</p>
+                      <p className="text-blue-50 text-sm">Click the link and fill out the form</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
                     <div className="flex-1">
-                      <p className="text-blue-100 font-semibold text-sm mb-1">Start Playing!</p>
-                      <p className="text-blue-200/80 text-sm">Login: <code className="bg-slate-950/60 px-2 py-1 rounded text-blue-300">/login &lt;password&gt;</code></p>
+                      <p className="text-white font-semibold text-sm mb-1">Start Playing!</p>
+                      <p className="text-blue-50 text-sm">Login: <code className="bg-slate-950/80 px-2 py-1 rounded text-blue-200 font-mono">/login &lt;password&gt;</code></p>
                     </div>
                   </div>
                 </div>
@@ -326,18 +325,18 @@ export default function Home() {
             </Card>
 
             {/* BEDROCK EDITION */}
-            <Card className="bg-gradient-to-br from-purple-900/40 to-pink-900/40 border-purple-500/50 backdrop-blur-sm shadow-2xl">
+            <Card className="bg-gradient-to-br from-purple-600/30 to-pink-600/30 border-purple-400 backdrop-blur-sm shadow-2xl shadow-purple-500/20">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-500/30 rounded-lg">
-                    <Smartphone className="w-6 h-6 text-purple-300" />
+                  <div className="p-2 bg-purple-500/40 rounded-lg">
+                    <Smartphone className="w-6 h-6 text-purple-200" />
                   </div>
                   <div>
                     <CardTitle className="text-white text-xl flex items-center gap-2">
                       BEDROCK Edition
                       <Badge variant="purple" className="text-xs">Mobile/Console</Badge>
                     </CardTitle>
-                    <CardDescription className="text-purple-200">
+                    <CardDescription className="text-purple-100">
                       For phones, tablets, Xbox, PlayStation, Switch
                     </CardDescription>
                   </div>
@@ -348,23 +347,23 @@ export default function Home() {
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
                     <div className="flex-1">
-                      <p className="text-purple-100 font-semibold text-sm mb-1">Join the Server</p>
-                      <p className="text-purple-200/80 text-sm">Server: <code className="bg-slate-950/60 px-2 py-1 rounded text-purple-300">{SERVER_IP}</code></p>
-                      <p className="text-purple-300/60 text-xs mt-1">Port: <code className="bg-slate-950/60 px-1 py-0.5 rounded text-purple-300">19132</code></p>
+                      <p className="text-white font-semibold text-sm mb-1">Join the Server</p>
+                      <p className="text-purple-50 text-sm">Server: <code className="bg-slate-950/80 px-2 py-1 rounded text-purple-200 font-mono">{SERVER_IP}</code></p>
+                      <p className="text-purple-100 text-xs mt-1">Port: <code className="bg-slate-950/80 px-1 py-0.5 rounded text-purple-200 font-mono">19132</code></p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
                     <div className="flex-1">
-                      <p className="text-purple-100 font-semibold text-sm mb-1">Get Your PIN</p>
-                      <p className="text-purple-200/80 text-sm">Type: <code className="bg-slate-950/60 px-2 py-1 rounded text-purple-300">/register</code></p>
-                      <p className="text-purple-300/60 text-xs mt-1">You'll receive a 6-digit PIN code</p>
+                      <p className="text-white font-semibold text-sm mb-1">Get Your PIN</p>
+                      <p className="text-purple-50 text-sm">Type: <code className="bg-slate-950/80 px-2 py-1 rounded text-purple-200 font-mono">/register</code></p>
+                      <p className="text-purple-100 text-xs mt-1">You'll receive a 6-digit PIN code</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
                     <div className="flex-1">
-                      <p className="text-purple-100 font-semibold text-sm mb-1">Enter PIN Below</p>
+                      <p className="text-white font-semibold text-sm mb-1">Enter PIN Below</p>
                       <form onSubmit={handlePinSubmit} className="space-y-2 mt-2">
                         <Input
                           type="text"
@@ -391,8 +390,8 @@ export default function Home() {
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
                     <div className="flex-1">
-                      <p className="text-purple-100 font-semibold text-sm mb-1">Complete & Play!</p>
-                      <p className="text-purple-200/80 text-sm">Fill out the form and start playing</p>
+                      <p className="text-white font-semibold text-sm mb-1">Complete & Play!</p>
+                      <p className="text-purple-50 text-sm">Fill out the form and start playing</p>
                     </div>
                   </div>
                 </div>

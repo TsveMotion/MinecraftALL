@@ -9,8 +9,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.geysermc.cumulus.form.SimpleForm;
-import org.geysermc.floodgate.api.FloodgateApi;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -153,37 +151,11 @@ public class RegisterCommand implements CommandExecutor {
     
     /**
      * Create and display a Bedrock Form UI popup with registration information
+     * Note: Floodgate integration disabled - forms not available
      */
     private void createBedrockForm(Player player, String registrationUrl, String pin) {
-        try {
-            // Create a simple form with registration information
-            // Note: Bedrock forms cannot directly open URLs, so we provide the information
-            // and the player must manually visit the registration page
-            SimpleForm form = SimpleForm.builder()
-                    .title("Account Registration")
-                    .content(
-                        "Welcome to the server!\n\n" +
-                        "Your PIN: §e" + pin + "§r\n\n" +
-                        "Please visit the registration website:\n" +
-                        "§b" + registrationUrl + "§r\n\n" +
-                        "Steps to register:\n" +
-                        "1. Visit the website above\n" +
-                        "2. Enter your PIN: " + pin + "\n" +
-                        "3. Complete registration\n" +
-                        "4. Use /login <password>\n\n" +
-                        "The PIN is also shown in chat!"
-                    )
-                    .button("Got it!")
-                    .button("Close")
-                    .build();
-            
-            // Send the form to the Bedrock player
-            FloodgateApi.getInstance().sendForm(player.getUniqueId(), form);
-            
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to send Bedrock form to player " + player.getName() + ": " + e.getMessage());
-            player.sendMessage(Component.text("Could not display popup. Please manually visit: " + registrationUrl)
-                    .color(NamedTextColor.YELLOW));
-        }
+        // Floodgate integration disabled
+        // Install Floodgate plugin separately for Bedrock form support
+        plugin.getLogger().info("Bedrock form display skipped (Floodgate not integrated)");
     }
 }

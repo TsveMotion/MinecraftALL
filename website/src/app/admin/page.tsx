@@ -4,15 +4,19 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Search, Shield, Ban, Clock, Loader2, Wifi, WifiOff, VolumeX, Users, Award, UserPlus, UserMinus } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertCircle, Search, Shield, Ban, Clock, Loader2, Wifi, WifiOff, VolumeX, Users, Award, UserPlus, UserMinus, UserCheck } from 'lucide-react'
 import { getYearGroupName } from '@/lib/userUtils'
 
 interface Role {
   id: number
   name: string
-  color: string | null
-  isPaid: boolean
+  symbol: string
+  colorHex: string
+  isFree: boolean
+  priceMinor: number
+  description: string | null
+  isActive: boolean
 }
 
 interface UserRole {
@@ -73,11 +77,46 @@ export default function AdminPage() {
   const [muteModalUser, setMuteModalUser] = useState<User | null>(null)
   const [muteDuration, setMuteDuration] = useState('')
   const [muteReason, setMuteReason] = useState('')
+  const [createRoleModal, setCreateRoleModal] = useState(false)
+  const [editRoleModal, setEditRoleModal] = useState<Role | null>(null)
+  const [roleFormData, setRoleFormData] = useState({ name: '', symbol: '★', colorHex: '#9333EA', description: '' })
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [availableRoles, setAvailableRoles] = useState<Role[]>([])
+  const [userDetailTab, setUserDetailTab] = useState<'roles' | 'activity'>('roles')
+  const [auditLogs, setAuditLogs] = useState<any[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
 
   useEffect(() => {
     fetchUsers()
     fetchReports()
+    fetchRoles()
   }, [])
+
+  useEffect(() => {
+    if (selectedUser) {
+      const userRoleIds = selectedUser.roles.map(ur => ur.role.id)
+      setAvailableRoles(roles.filter(r => !userRoleIds.includes(r.id)))
+      fetchAuditLogs(selectedUser.id)
+    } else {
+      setUserDetailTab('roles')
+      setAuditLogs([])
+    }
+  }, [selectedUser, roles])
+
+  const fetchAuditLogs = async (userId: number) => {
+    setAuditLoading(true)
+    try {
+      const res = await fetch(`/api/admin/audit?userId=${userId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setAuditLogs(data.logs || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch audit logs:', error)
+    } finally {
+      setAuditLoading(false)
+    }
+  }
 
   useEffect(() => {
     filterUsers()
@@ -119,6 +158,20 @@ export default function AdminPage() {
       console.error('Error fetching reports:', error)
     } finally {
       setReportsLoading(false)
+    }
+  }
+
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch('/api/admin/roles')
+      if (response.ok) {
+        const data = await response.json()
+        setRoles(data.roles)
+      } else {
+        console.error('Failed to load roles')
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error)
     }
   }
 
@@ -283,6 +336,117 @@ export default function AdminPage() {
     }
   }
 
+  const handleCreateRole = async () => {
+    if (!roleFormData.name.trim()) {
+      alert('Role name is required')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/admin/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: roleFormData.name,
+          symbol: roleFormData.symbol || '★',
+          colorHex: roleFormData.colorHex,
+          description: roleFormData.description,
+          isFree: true,
+          isActive: true
+        }),
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        alert('Role created successfully!')
+        setCreateRoleModal(false)
+        fetchRoles()
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      alert('Failed to create role')
+    }
+  }
+
+  const handleEditRole = async () => {
+    if (!editRoleModal || !roleFormData.name.trim()) {
+      alert('Role name is required')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/admin/roles', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roleId: editRoleModal.id,
+          name: roleFormData.name,
+          symbol: roleFormData.symbol,
+          colorHex: roleFormData.colorHex,
+          description: roleFormData.description,
+        }),
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        alert('Role updated successfully!')
+        setEditRoleModal(null)
+        fetchRoles()
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      alert('Failed to update role')
+    }
+  }
+
+  const handleAssignRole = async (userId: number, roleId: number) => {
+    try {
+      const response = await fetch('/api/admin/assign-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, roleId }),
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        alert('Role assigned successfully!')
+        fetchUsers()
+        if (selectedUser) {
+          const updated = users.find(u => u.id === selectedUser.id)
+          if (updated) setSelectedUser(updated)
+        }
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      alert('Failed to assign role')
+    }
+  }
+
+  const handleRemoveRole = async (userId: number, roleId: number) => {
+    try {
+      const response = await fetch(`/api/admin/assign-role?userId=${userId}&roleId=${roleId}`, {
+        method: 'DELETE',
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        alert('Role removed successfully!')
+        fetchUsers()
+        if (selectedUser) {
+          const updated = users.find(u => u.id === selectedUser.id)
+          if (updated) setSelectedUser(updated)
+        }
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      alert('Failed to remove role')
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center p-4">
@@ -302,13 +466,23 @@ export default function AdminPage() {
               Admin Panel
             </h1>
           </div>
-          <Button
-            onClick={() => router.push('/dashboard')}
-            variant="outline"
-            className="bg-slate-800 hover:bg-slate-700 border-slate-700 text-white"
-          >
-            Back to Dashboard
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => router.push('/admin/live-chat')}
+              variant="outline"
+              className="bg-green-900/20 hover:bg-green-900/40 border-green-500/30 text-green-400"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Live Chat
+            </Button>
+            <Button
+              onClick={() => router.push('/dashboard')}
+              variant="outline"
+              className="bg-slate-800 hover:bg-slate-700 border-slate-700 text-white"
+            >
+              Back to Dashboard
+            </Button>
+          </div>
         </div>
 
         {error && (
@@ -464,12 +638,12 @@ export default function AdminPage() {
                                 key={userRole.role.id}
                                 className="text-xs px-2 py-1 rounded border"
                                 style={{ 
-                                  backgroundColor: userRole.role.color ? `${userRole.role.color}20` : '#334155',
-                                  borderColor: userRole.role.color ? `${userRole.role.color}50` : '#475569',
-                                  color: userRole.role.color || '#94a3b8'
+                                  backgroundColor: userRole.role.colorHex ? `${userRole.role.colorHex}20` : '#334155',
+                                  borderColor: userRole.role.colorHex ? `${userRole.role.colorHex}50` : '#475569',
+                                  color: userRole.role.colorHex || '#94a3b8'
                                 }}
                               >
-                                {userRole.role.name}
+                                {userRole.role.symbol} {userRole.role.name}
                               </span>
                             ))
                           ) : (
@@ -491,6 +665,15 @@ export default function AdminPage() {
                       </td>
                       <td className="p-3">
                         <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedUser(user)}
+                            className="bg-purple-900/20 hover:bg-purple-900/40 border-purple-500/50 text-purple-400"
+                          >
+                            <Users className="w-4 h-4 mr-1" />
+                            Manage
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -660,7 +843,10 @@ export default function AdminPage() {
             <CardTitle className="text-white flex items-center justify-between">
               <span>Role Management</span>
               <Button
-                onClick={() => {/* TODO: Open create role modal */}}
+                onClick={() => {
+                  setRoleFormData({ name: '', symbol: '★', colorHex: '#9333EA', description: '' })
+                  setCreateRoleModal(true)
+                }}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
@@ -669,18 +855,78 @@ export default function AdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-16 space-y-4">
-              <Award className="w-16 h-16 text-slate-600 mx-auto" />
-              <div>
-                <h3 className="text-white text-lg font-semibold mb-2">Role System Coming Soon</h3>
-                <p className="text-slate-400">
-                  The role management system is under development.
-                </p>
-                <p className="text-slate-500 text-sm mt-2">
-                  You'll be able to create, edit, and assign roles to players here.
-                </p>
+            {roles.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                <Award className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No roles created yet</p>
+                <p className="text-sm text-slate-500 mt-1">Click "Create Role" to add your first role</p>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                {roles.map((role) => (
+                  <div key={role.id} className="bg-slate-900/50 border border-slate-700 rounded-lg p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-xl font-bold"
+                        style={{ backgroundColor: role.colorHex || '#6B7280', color: '#ffffff' }}
+                      >
+                        {role.symbol}
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold">{role.name}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          {role.isFree ? (
+                            <span className="text-xs bg-blue-900/30 text-blue-400 px-2 py-0.5 rounded">Free</span>
+                          ) : (
+                            <span className="text-xs bg-amber-900/30 text-amber-400 px-2 py-0.5 rounded">Coming Soon</span>
+                          )}
+                          <span className="text-xs text-slate-400">{role.colorHex}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => {
+                          setRoleFormData({
+                            name: role.name,
+                            symbol: role.symbol,
+                            colorHex: role.colorHex,
+                            description: role.description || ''
+                          })
+                          setEditRoleModal(role)
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="bg-blue-900/20 border-blue-500/30 text-blue-400 hover:bg-blue-900/40"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          if (confirm(`Delete role "${role.name}"?`)) {
+                            try {
+                              const response = await fetch(`/api/admin/roles?roleId=${role.id}`, {
+                                method: 'DELETE',
+                              })
+                              if (response.ok) {
+                                fetchRoles()
+                              }
+                            } catch (error) {
+                              console.error('Failed to delete role:', error)
+                            }
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="bg-red-900/20 border-red-500/30 text-red-400 hover:bg-red-900/40"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
         )}
@@ -690,9 +936,13 @@ export default function AdminPage() {
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white">Admin Management</CardTitle>
+            <CardDescription className="text-slate-400">
+              Manage administrator permissions
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* Primary Admin */}
               <div className="bg-purple-900/20 border border-purple-500/30 p-4 rounded-lg">
                 <h3 className="text-purple-400 font-semibold mb-2 flex items-center gap-2">
                   <Shield className="w-5 h-5" />
@@ -706,16 +956,98 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <div className="text-center py-12 space-y-4">
-                <Users className="w-16 h-16 text-slate-600 mx-auto" />
-                <div>
-                  <h3 className="text-white text-lg font-semibold mb-2">Additional Admin Management</h3>
-                  <p className="text-slate-400">
-                    Admin promotion system is under development.
-                  </p>
-                  <p className="text-slate-500 text-sm mt-2">
-                    You'll be able to promote/demote users to admin status here.
-                  </p>
+              {/* Admin List */}
+              <div>
+                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-blue-400" />
+                  Current Administrators
+                </h3>
+                <div className="bg-slate-900/50 border border-slate-700 rounded-lg divide-y divide-slate-700">
+                  {users
+                    .filter(u => u.isAdmin)
+                    .map((admin) => (
+                      <div key={admin.id} className="p-4 flex items-center justify-between">
+                        <div>
+                          <p className="text-white font-medium">{admin.minecraftUsername}</p>
+                          <p className="text-slate-400 text-sm">{admin.email}</p>
+                        </div>
+                        {admin.email !== '20-tsvetanov-k@thestreetlyacademy.co.uk' && (
+                          <Button
+                            onClick={async () => {
+                              if (confirm(`Remove admin access from ${admin.minecraftUsername}?`)) {
+                                try {
+                                  const response = await fetch('/api/admin/manage-admins', {
+                                    method: 'DELETE',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ userId: admin.id }),
+                                  })
+                                  if (response.ok) {
+                                    fetchUsers()
+                                  }
+                                } catch (error) {
+                                  console.error('Failed to remove admin:', error)
+                                }
+                              }
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="bg-red-900/20 border-red-500/30 text-red-400 hover:bg-red-900/40"
+                          >
+                            <UserMinus className="w-4 h-4 mr-2" />
+                            Remove Admin
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  {users.filter(u => u.isAdmin).length === 0 && (
+                    <div className="p-8 text-center text-slate-500">
+                      No additional administrators
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Non-Admin Users */}
+              <div>
+                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-slate-400" />
+                  Regular Users
+                </h3>
+                <div className="bg-slate-900/50 border border-slate-700 rounded-lg divide-y divide-slate-700 max-h-96 overflow-y-auto">
+                  {users
+                    .filter(u => !u.isAdmin)
+                    .map((user) => (
+                      <div key={user.id} className="p-4 flex items-center justify-between">
+                        <div>
+                          <p className="text-white font-medium">{user.minecraftUsername}</p>
+                          <p className="text-slate-400 text-sm">{user.email}</p>
+                        </div>
+                        <Button
+                          onClick={async () => {
+                            if (confirm(`Grant admin access to ${user.minecraftUsername}?`)) {
+                              try {
+                                const response = await fetch('/api/admin/manage-admins', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ userId: user.id }),
+                                })
+                                if (response.ok) {
+                                  fetchUsers()
+                                }
+                              } catch (error) {
+                                console.error('Failed to add admin:', error)
+                              }
+                            }
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="bg-green-900/20 border-green-500/30 text-green-400 hover:bg-green-900/40"
+                        >
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Make Admin
+                        </Button>
+                      </div>
+                    ))}
                 </div>
               </div>
             </div>
@@ -863,6 +1195,348 @@ export default function AdminPage() {
                   Cancel
                 </Button>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Create Role Modal */}
+      {createRoleModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Create New Role</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-white text-sm">Role Name *</label>
+                <Input
+                  type="text"
+                  placeholder="Enter role name..."
+                  value={roleFormData.name}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, name: e.target.value })}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white text-sm">Symbol</label>
+                <Input
+                  type="text"
+                  placeholder="Enter symbol (e.g., ★)"
+                  value={roleFormData.symbol}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, symbol: e.target.value })}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                  maxLength={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white text-sm">Color</label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={roleFormData.colorHex}
+                    onChange={(e) => setRoleFormData({ ...roleFormData, colorHex: e.target.value })}
+                    className="w-16 h-10 bg-slate-900/50 border-slate-600"
+                  />
+                  <Input
+                    type="text"
+                    value={roleFormData.colorHex}
+                    onChange={(e) => setRoleFormData({ ...roleFormData, colorHex: e.target.value })}
+                    className="flex-1 bg-slate-900/50 border-slate-600 text-white"
+                    placeholder="#9333EA"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white text-sm">Description (Optional)</label>
+                <Input
+                  type="text"
+                  placeholder="Enter role description..."
+                  value={roleFormData.description}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, description: e.target.value })}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                />
+              </div>
+
+              <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded text-blue-300 text-sm">
+                All roles are free to claim. Paid roles are coming soon!
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleCreateRole}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                >
+                  Create Role
+                </Button>
+                <Button
+                  onClick={() => setCreateRoleModal(false)}
+                  variant="outline"
+                  className="bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Edit Role Modal */}
+      {editRoleModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Edit Role</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-white text-sm">Role Name *</label>
+                <Input
+                  type="text"
+                  placeholder="Enter role name..."
+                  value={roleFormData.name}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, name: e.target.value })}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white text-sm">Symbol</label>
+                <Input
+                  type="text"
+                  placeholder="Enter symbol (e.g., ★)"
+                  value={roleFormData.symbol}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, symbol: e.target.value })}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                  maxLength={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white text-sm">Color</label>
+                <div className="flex gap-2">
+                  <Input
+                    type="color"
+                    value={roleFormData.colorHex}
+                    onChange={(e) => setRoleFormData({ ...roleFormData, colorHex: e.target.value })}
+                    className="w-16 h-10 bg-slate-900/50 border-slate-600"
+                  />
+                  <Input
+                    type="text"
+                    value={roleFormData.colorHex}
+                    onChange={(e) => setRoleFormData({ ...roleFormData, colorHex: e.target.value })}
+                    className="flex-1 bg-slate-900/50 border-slate-600 text-white"
+                    placeholder="#9333EA"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-white text-sm">Description (Optional)</label>
+                <Input
+                  type="text"
+                  placeholder="Enter role description..."
+                  value={roleFormData.description}
+                  onChange={(e) => setRoleFormData({ ...roleFormData, description: e.target.value })}
+                  className="bg-slate-900/50 border-slate-600 text-white"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleEditRole}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                >
+                  Save Changes
+                </Button>
+                <Button
+                  onClick={() => setEditRoleModal(null)}
+                  variant="outline"
+                  className="bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* User Detail Panel */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <Card className="w-full max-w-2xl bg-slate-800 border-slate-700 my-8">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center justify-between">
+                <span>Manage {selectedUser.minecraftUsername}</span>
+                <Button
+                  onClick={() => setSelectedUser(null)}
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-400 hover:text-white"
+                >
+                  ✕
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* User Info */}
+              <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4">
+                <h3 className="text-white font-semibold mb-3">User Information</h3>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-slate-400">Full Name:</span>
+                    <p className="text-white">{selectedUser.fullName}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Email:</span>
+                    <p className="text-white">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">UUID:</span>
+                    <p className="text-white font-mono text-xs">{selectedUser.minecraftUuid || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Last Login:</span>
+                    <p className="text-white text-xs">
+                      {selectedUser.lastLoginAt ? new Date(selectedUser.lastLoginAt).toLocaleString() : 'Never'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex gap-2 border-b border-slate-700">
+                <button
+                  onClick={() => setUserDetailTab('roles')}
+                  className={`px-4 py-2 font-semibold transition-colors ${
+                    userDetailTab === 'roles'
+                      ? 'text-purple-400 border-b-2 border-purple-400'
+                      : 'text-slate-400 hover:text-slate-300'
+                  }`}
+                >
+                  Roles
+                </button>
+                <button
+                  onClick={() => setUserDetailTab('activity')}
+                  className={`px-4 py-2 font-semibold transition-colors ${
+                    userDetailTab === 'activity'
+                      ? 'text-purple-400 border-b-2 border-purple-400'
+                      : 'text-slate-400 hover:text-slate-300'
+                  }`}
+                >
+                  Activity Log
+                </button>
+              </div>
+
+              {/* Roles Tab */}
+              {userDetailTab === 'roles' && (
+                <>
+                  {/* Current Roles */}
+                  <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4">
+                    <h3 className="text-white font-semibold mb-3">Current Roles</h3>
+                    {selectedUser.roles.length > 0 ? (
+                      <div className="space-y-2">
+                        {selectedUser.roles.map((userRole) => (
+                          <div key={userRole.role.id} className="flex items-center justify-between bg-slate-800/50 p-3 rounded">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-8 h-8 rounded flex items-center justify-center font-bold"
+                                style={{ backgroundColor: userRole.role.colorHex, color: '#ffffff' }}
+                              >
+                                {userRole.role.symbol}
+                              </div>
+                              <span className="text-white">{userRole.role.name}</span>
+                            </div>
+                            <Button
+                              onClick={() => {
+                                if (confirm(`Remove ${userRole.role.name} from ${selectedUser.minecraftUsername}?`)) {
+                                  handleRemoveRole(selectedUser.id, userRole.role.id)
+                                }
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="bg-red-900/20 border-red-500/30 text-red-400 hover:bg-red-900/40"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-sm">No roles assigned</p>
+                    )}
+                  </div>
+
+                  {/* Assign New Role */}
+                  <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4">
+                    <h3 className="text-white font-semibold mb-3">Assign New Role</h3>
+                    {availableRoles.length > 0 ? (
+                      <div className="space-y-2">
+                        {availableRoles.map((role) => (
+                          <div key={role.id} className="flex items-center justify-between bg-slate-800/50 p-3 rounded">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-8 h-8 rounded flex items-center justify-center font-bold"
+                                style={{ backgroundColor: role.colorHex, color: '#ffffff' }}
+                              >
+                                {role.symbol}
+                              </div>
+                              <span className="text-white">{role.name}</span>
+                            </div>
+                            <Button
+                              onClick={() => handleAssignRole(selectedUser.id, role.id)}
+                              variant="outline"
+                              size="sm"
+                              className="bg-green-900/20 border-green-500/30 text-green-400 hover:bg-green-900/40"
+                            >
+                              Assign
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 text-sm">User has all available roles</p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Activity Log Tab */}
+              {userDetailTab === 'activity' && (
+                <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4">
+                  <h3 className="text-white font-semibold mb-3">Activity Log</h3>
+                  {auditLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
+                    </div>
+                  ) : auditLogs.length > 0 ? (
+                    <div className="max-h-96 overflow-y-auto space-y-2 custom-scrollbar">
+                      {auditLogs.map((log) => (
+                        <div key={log.id} className="bg-slate-800/50 p-3 rounded text-sm">
+                          <div className="flex items-start justify-between mb-1">
+                            <span className="text-purple-400 font-semibold">{log.action}</span>
+                            <span className="text-slate-500 text-xs">
+                              {new Date(log.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          {log.meta && (
+                            <div className="text-slate-300 text-xs mt-1">
+                              {typeof log.meta === 'object' ? JSON.stringify(log.meta) : log.meta}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-slate-400 text-sm text-center py-8">No activity recorded yet</p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -1,15 +1,15 @@
 # MinecraftAuth Configuration
-
 database:
-  host: ddns.tsvweb.com
+  host: vps1.streetlymc.com
   port: 3306
   database: minecraft_auth
   username: authuser
   password: StrongPasswordHere
   pool-size: 10
 
+  
 registration:
-  website-url: https://mc-verify.tsvweb.co.uk
+  website-url: https://streetlymc.com
   token-expiry-minutes: 30
   pin-expiry-minutes: 30
 
@@ -40,3 +40,23 @@ messages:
   bedrock-register-instructions: "&e1. Click the popup button to open registration\n&e2. Enter your PIN on the website\n&e3. Set your password\n&e4. Use /login <password> or /login <pin>"
   bedrock-pin-expired: "&cYour PIN has expired. Use &e/register &cto get a new one."
   pin-login-success: "&aLogged in with PIN! Next time use /login <password>"
+
+# MinecraftRoles API Configuration (for roles and chat features)
+apiBaseUrl: https://streetlymc.com
+apiKey: YOUR_API_KEY_HERE
+cacheSeconds: 30
+
+roleTag:
+  admin:
+    symbol: "◆"
+    color: "#93C572"
+
+privacy:
+  chatObfuscate: true
+  obfuscatePattern: "first3_ellipsis_last2"
+
+report:
+  enabled: true
+
+mute:
+  enabled: true

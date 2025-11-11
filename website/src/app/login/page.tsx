@@ -11,9 +11,12 @@ import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 export default function LoginPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    minecraftUsername: '',
+    username: '',
     password: '',
   })
+
+  const EMAIL_DOMAIN = '@thestreetlyacademy.co.uk'
+  const fullEmail = formData.username.includes('@') ? formData.username : `${formData.username}${EMAIL_DOMAIN}`
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +32,7 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          minecraftUsername: formData.minecraftUsername,
+          email: fullEmail,
           password: formData.password,
         }),
       })
@@ -66,7 +69,7 @@ export default function LoginPage() {
             </div>
             <CardTitle className="text-white text-2xl">Login Successful!</CardTitle>
             <CardDescription className="text-slate-400">
-              Welcome back, {formData.minecraftUsername}
+              Welcome back!
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -93,16 +96,22 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="minecraftUsername" className="text-white">Minecraft Username</Label>
-              <Input
-                id="minecraftUsername"
-                type="text"
-                required
-                value={formData.minecraftUsername}
-                onChange={(e) => setFormData({ ...formData, minecraftUsername: e.target.value })}
-                className="bg-slate-900/50 border-slate-600 text-white"
-                placeholder="Steve"
-              />
+              <Label htmlFor="username" className="text-white">School Email / Username</Label>
+              <div className="relative">
+                <Input
+                  id="username"
+                  type="text"
+                  required
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  className="bg-slate-900/50 border-slate-600 text-white pr-60"
+                  placeholder="20-tsvetanov-k"
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none">
+                  {!formData.username.includes('@') && EMAIL_DOMAIN}
+                </div>
+              </div>
+              <p className="text-slate-500 text-xs">Enter your username (e.g., 20-lastname-f) or full email</p>
             </div>
 
             <div className="space-y-2">

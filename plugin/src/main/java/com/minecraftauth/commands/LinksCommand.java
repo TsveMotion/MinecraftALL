@@ -42,9 +42,9 @@ public class LinksCommand implements CommandExecutor {
         player.sendMessage(Component.text("🌐 Website & Dashboard")
                 .color(NamedTextColor.AQUA)
                 .decorate(TextDecoration.BOLD));
-        player.sendMessage(Component.text("   https://mc-verify.tsvweb.co.uk")
+        player.sendMessage(Component.text("   https://streetlymc.com")
                 .color(NamedTextColor.WHITE)
-                .clickEvent(ClickEvent.openUrl("https://mc-verify.tsvweb.co.uk")));
+                .clickEvent(ClickEvent.openUrl("https://streetlymc.com")));
         player.sendMessage(Component.text("   » Login, view stats, and manage your account")
                 .color(NamedTextColor.GRAY));
         player.sendMessage(Component.text(""));
@@ -58,13 +58,12 @@ public class LinksCommand implements CommandExecutor {
         player.sendMessage(Component.text(""));
         
         // Main site
-        player.sendMessage(Component.text("🏢 Hosted By")
+        player.sendMessage(Component.text("🎮 Minecraft Server")
                 .color(NamedTextColor.LIGHT_PURPLE)
                 .decorate(TextDecoration.BOLD));
-        player.sendMessage(Component.text("   https://tsvweb.co.uk")
-                .color(NamedTextColor.WHITE)
-                .clickEvent(ClickEvent.openUrl("https://tsvweb.co.uk")));
-        player.sendMessage(Component.text("   » Professional web hosting & development")
+        player.sendMessage(Component.text("   play.streetlymc.com")
+                .color(NamedTextColor.WHITE));
+        player.sendMessage(Component.text("   » Join now and start playing!")
                 .color(NamedTextColor.GRAY));
         player.sendMessage(Component.text(""));
         

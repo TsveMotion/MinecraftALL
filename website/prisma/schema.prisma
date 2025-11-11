@@ -12,7 +12,7 @@ datasource db {
 
 model User {
   id                Int       @id @default(autoincrement())
-  email             String    @unique @db.VarChar(255)
+  email             String?   @unique @db.VarChar(255)
   passwordHash      String    @map("password_hash") @db.VarChar(255)
   fullName          String    @map("full_name") @db.VarChar(255)
   minecraftUsername String    @unique @map("minecraft_username") @db.VarChar(16)
@@ -24,14 +24,18 @@ model User {
   verified          Boolean   @default(false)
   lastLoginAt       DateTime? @map("last_login_at")
   lastLoginIp       String?   @map("last_login_ip") @db.VarChar(45)
+  lastSeenAt        DateTime? @map("last_seen_at")
   isOnline          Boolean   @default(false) @map("is_online")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
 
-  reportsMade       Report[]  @relation("ReporterReports")
-  reportsReceived   Report[]  @relation("ReportedReports")
+  reportsMade       Report[]     @relation("ReporterReports")
+  reportsReceived   Report[]     @relation("ReportedReports")
   admin             Admin?
   roles             UserRole[]
+  purchases         Purchase[]
+  auditLogs         AuditLog[]
+  mutesCreated      Mute[]       @relation("MuteCreator")
 
   @@index([minecraftUsername])
   @@index([email])
@@ -66,18 +70,23 @@ model BedrockPin {
 }
 
 model Report {
-  id                Int      @id @default(autoincrement())
-  reporterId        Int      @map("reporter_id")
-  reportedId        Int      @map("reported_id")
-  description       String   @db.Text
-  status            String   @default("open") @db.VarChar(20)
-  createdAt         DateTime @default(now()) @map("created_at")
+  id          Int      @id @default(autoincrement())
+  reporterId  Int?     @map("reporter_id")
+  reportedId  Int?     @map("reported_id")
+  reporter    String   @db.VarChar(16) // username
+  target      String   @db.VarChar(16) // username
+  reason      String   @db.Text
+  server      String?  @db.VarChar(100)
+  status      String   @default("open") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  reporter          User     @relation("ReporterReports", fields: [reporterId], references: [id], onDelete: Cascade)
-  reported          User     @relation("ReportedReports", fields: [reportedId], references: [id], onDelete: Cascade)
+  reporterUser User? @relation("ReporterReports", fields: [reporterId], references: [id], onDelete: SetNull)
+  reportedUser User? @relation("ReportedReports", fields: [reportedId], references: [id], onDelete: SetNull)
 
   @@index([reporterId])
   @@index([reportedId])
+  @@index([reporter])
+  @@index([target])
   @@index([status])
   @@map("reports")
 }
@@ -108,40 +117,103 @@ model Admin {
 
 model Mute {
   id        Int       @id @default(autoincrement())
-  userId    Int       @map("user_id")
-  mutedBy   Int       @map("muted_by")
+  username  String    @unique @db.VarChar(16)
   reason    String?   @db.Text
-  expiresAt DateTime? @map("expires_at")
+  endsAt    DateTime? @map("ends_at")
   createdAt DateTime  @default(now()) @map("created_at")
+  createdBy Int?      @map("created_by")
 
-  @@index([userId])
-  @@index([expiresAt])
+  creator   User?     @relation("MuteCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@index([username])
+  @@index([endsAt])
   @@map("mutes")
 }
 
 model Role {
-  id        Int        @id @default(autoincrement())
-  name      String     @unique @db.VarChar(50)
-  isPaid    Boolean    @default(false) @map("is_paid")
-  price     Int?       // in GBP pennies (e.g., 500 = £5.00)
-  color     String?    @db.VarChar(20)
-  createdAt DateTime   @default(now()) @map("created_at")
-  users     UserRole[]
+  id          Int        @id @default(autoincrement())
+  name        String     @unique @db.VarChar(50)
+  description String?    @db.Text
+  symbol      String     @default("★") @db.VarChar(10)
+  colorHex    String     @default("#FFFFFF") @map("color_hex") @db.VarChar(7)
+  isFree      Boolean    @default(false) @map("is_free")
+  priceMinor  Int        @default(0) @map("price_minor") // in pence
+  isActive    Boolean    @default(true) @map("is_active")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
+  users       UserRole[]
+  purchases   Purchase[]
 
   @@index([name])
+  @@index([isActive])
   @@map("roles")
 }
 
 model UserRole {
-  userId     Int      @map("user_id")
-  roleId     Int      @map("role_id")
-  assignedAt DateTime @default(now()) @map("assigned_at")
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  roleId    Int      @map("role_id")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  grantedBy Int?     @map("granted_by") // admin userId
+  createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  @@id([userId, roleId])
+  @@unique([userId, roleId])
   @@index([userId])
   @@index([roleId])
+  @@index([isPrimary])
   @@map("user_roles")
+}
+
+model Purchase {
+  id          Int            @id @default(autoincrement())
+  userId      Int            @map("user_id")
+  roleId      Int            @map("role_id")
+  amountMinor Int            @map("amount_minor")
+  status      PurchaseStatus @default(PENDING)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([roleId])
+  @@index([status])
+  @@map("purchases")
+}
+
+enum PurchaseStatus {
+  PENDING
+  PAID
+  REFUNDED
+  CANCELED
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  actorId   Int?     @map("actor_id")
+  action    String   @db.VarChar(255)
+  meta      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ServerStat {
+  id        Int      @id @default(autoincrement())
+  online    Boolean
+  tps       Float?
+  players   Int?
+  raw       Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("server_stats")
 }

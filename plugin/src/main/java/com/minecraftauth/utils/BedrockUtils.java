@@ -1,13 +1,13 @@
 package com.minecraftauth.utils;
 
 import org.bukkit.entity.Player;
-import org.geysermc.floodgate.api.FloodgateApi;
 
 import java.security.SecureRandom;
 import java.util.UUID;
 
 /**
  * Utility class for Bedrock player detection and PIN generation
+ * Note: Floodgate detection disabled - install Floodgate plugin separately if needed
  */
 public class BedrockUtils {
     
@@ -15,32 +15,28 @@ public class BedrockUtils {
     
     /**
      * Check if a player is connecting from Bedrock Edition using Floodgate
+     * Currently disabled - returns false. Install Floodgate for Bedrock support.
      * 
      * @param player The player to check
-     * @return true if the player is a Bedrock player, false otherwise
+     * @return false (Floodgate integration disabled)
      */
     public static boolean isBedrock(Player player) {
-        try {
-            return FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId());
-        } catch (Exception e) {
-            // Floodgate might not be installed or enabled
-            return false;
-        }
+        // Floodgate integration disabled to avoid dependency issues
+        // Install Floodgate plugin separately on your server for Bedrock support
+        return false;
     }
     
     /**
      * Check if a UUID belongs to a Bedrock player
+     * Currently disabled - returns false. Install Floodgate for Bedrock support.
      * 
      * @param uuid The UUID to check
-     * @return true if the UUID is from a Bedrock player, false otherwise
+     * @return false (Floodgate integration disabled)
      */
     public static boolean isBedrock(UUID uuid) {
-        try {
-            return FloodgateApi.getInstance().isFloodgatePlayer(uuid);
-        } catch (Exception e) {
-            // Floodgate might not be installed or enabled
-            return false;
-        }
+        // Floodgate integration disabled to avoid dependency issues
+        // Install Floodgate plugin separately on your server for Bedrock support
+        return false;
     }
     
     /**
@@ -82,13 +78,8 @@ public class BedrockUtils {
      * @return The username without the Floodgate prefix, or the normal username if not a Bedrock player
      */
     public static String getBedrockUsername(Player player) {
-        if (isBedrock(player)) {
-            try {
-                return FloodgateApi.getInstance().getPlayer(player.getUniqueId()).getUsername();
-            } catch (Exception e) {
-                return player.getName();
-            }
-        }
+        // Floodgate integration disabled - return normal username
+        // Install Floodgate plugin separately for Bedrock username support
         return player.getName();
     }
 }

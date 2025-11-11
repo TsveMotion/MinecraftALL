@@ -30,14 +30,14 @@ export async function GET(request: NextRequest) {
     // Fetch all reports with related user data
     const reports = await prisma.report.findMany({
       include: {
-        reporter: {
+        reporterUser: {
           select: {
             minecraftUsername: true,
             realName: true,
             fullName: true,
           },
         },
-        reported: {
+        reportedUser: {
           select: {
             minecraftUsername: true,
             realName: true,

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, CheckCircle2, Loader2, LogOut, User, Mail, Hash, Shield, Wifi, WifiOff, Clock, MapPin } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, LogOut, User, Mail, Hash, Shield, Wifi, WifiOff, Clock, MapPin, Award } from 'lucide-react'
 import { getYearGroupName } from '@/lib/userUtils'
 
 interface Role {
@@ -294,6 +294,64 @@ export default function DashboardPage() {
                     {new Date(user.lastLoginAt || Date.now()).toLocaleDateString()}
                   </p>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Roles Card */}
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Award className="w-5 h-5 text-purple-400" />
+                  Your Roles
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Customize your in-game appearance
+                </CardDescription>
+              </div>
+              <Button
+                onClick={() => router.push('/dashboard/roles')}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Award className="w-4 h-4 mr-2" />
+                Browse Roles
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {user.roles && user.roles.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {user.roles.map((role: any) => (
+                    <Badge
+                      key={role.id}
+                      style={{
+                        backgroundColor: role.color ? `${role.color}30` : undefined,
+                        borderColor: role.color ? `${role.color}60` : undefined,
+                        color: role.color || undefined
+                      }}
+                      className="px-3 py-1"
+                    >
+                      {role.name}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-6 text-center">
+                  <Award className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-400 text-sm">You don't have any roles yet</p>
+                  <p className="text-slate-500 text-xs mt-2">Claim a free role to customize your chat tag!</p>
+                </div>
+              )}
+              
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                <h3 className="text-blue-400 font-semibold text-sm mb-2">✨ Role Shop Available!</h3>
+                <p className="text-slate-400 text-xs">
+                  Browse free and premium roles to customize your in-game appearance. Each role comes with a unique symbol and color!
+                </p>
               </div>
             </div>
           </CardContent>

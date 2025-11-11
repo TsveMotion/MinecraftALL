@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { name, isPaid, price, color } = await request.json()
+    const { name, description, symbol, colorHex, isFree, priceMinor, isActive } = await request.json()
 
     if (!name) {
       return NextResponse.json(
@@ -103,9 +103,12 @@ export async function POST(request: NextRequest) {
     const role = await prisma.role.create({
       data: {
         name,
-        isPaid: isPaid || false,
-        price: isPaid ? price : null,
-        color: color || null
+        description: description || null,
+        symbol: symbol || '★',
+        colorHex: colorHex || '#FFFFFF',
+        isFree: isFree || false,
+        priceMinor: priceMinor || 0,
+        isActive: isActive !== undefined ? isActive : true,
       }
     })
 
@@ -156,7 +159,7 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { roleId, name, isPaid, price, color } = await request.json()
+    const { roleId, name, description, symbol, colorHex, isFree, priceMinor, isActive } = await request.json()
 
     if (!roleId) {
       return NextResponse.json(
@@ -165,14 +168,18 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    const updateData: any = {}
+    if (name !== undefined) updateData.name = name
+    if (description !== undefined) updateData.description = description
+    if (symbol !== undefined) updateData.symbol = symbol
+    if (colorHex !== undefined) updateData.colorHex = colorHex
+    if (isFree !== undefined) updateData.isFree = isFree
+    if (priceMinor !== undefined) updateData.priceMinor = priceMinor
+    if (isActive !== undefined) updateData.isActive = isActive
+
     const role = await prisma.role.update({
       where: { id: roleId },
-      data: {
-        name: name !== undefined ? name : undefined,
-        isPaid: isPaid !== undefined ? isPaid : undefined,
-        price: isPaid ? price : null,
-        color: color !== undefined ? color : undefined
-      }
+      data: updateData
     })
 
     return NextResponse.json({ 

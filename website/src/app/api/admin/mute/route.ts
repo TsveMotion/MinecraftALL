@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 import { isUserAdmin } from '@/lib/adminUtils'
+import { executeRconCommand } from '@/lib/rcon'
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,40 +46,48 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find target user
-    const targetUser = await prisma.user.findUnique({
-      where: { minecraftUsername }
-    })
-
-    if (!targetUser) {
-      return NextResponse.json(
-        { error: 'Player not found' },
-        { status: 404 }
-      )
-    }
-
     // Calculate expiration
-    let expiresAt: Date | null = null
+    let endsAt: Date | null = null
     if (!isPermanent && durationHours) {
-      expiresAt = new Date()
-      expiresAt.setHours(expiresAt.getHours() + durationHours)
+      endsAt = new Date()
+      endsAt.setHours(endsAt.getHours() + durationHours)
     }
 
-    // Create mute record
-    await prisma.mute.create({
-      data: {
-        userId: targetUser.id,
-        mutedBy: currentUser.id,
+    // Create or update mute record (upsert to handle existing mutes)
+    await prisma.mute.upsert({
+      where: { username: minecraftUsername },
+      create: {
+        username: minecraftUsername,
         reason: reason || 'No reason provided',
-        expiresAt
+        endsAt,
+        createdBy: currentUser.id,
+      },
+      update: {
+        reason: reason || 'No reason provided',
+        endsAt,
+        createdBy: currentUser.id,
       }
     })
 
-    // TODO: Send RCON command to Minecraft server
-    // const muteCommand = isPermanent 
-    //   ? `/mute ${minecraftUsername}`
-    //   : `/mute ${minecraftUsername} ${durationHours}h`
-    // await sendRCONCommand(muteCommand)
+    const sanitizedReason = (reason?.trim() || 'No reason provided').replace(/\s+/g, ' ')
+    let rconMuteCommand: string | null = null
+
+    if (isPermanent) {
+      rconMuteCommand = `mute ${minecraftUsername} ${sanitizedReason}`
+    } else if (durationHours) {
+      rconMuteCommand = `mute ${minecraftUsername} ${durationHours}h ${sanitizedReason}`
+    }
+
+    let rconMuted = false
+
+    if (rconMuteCommand) {
+      try {
+        const rconResponse = await executeRconCommand(rconMuteCommand)
+        rconMuted = !!rconResponse
+      } catch (error) {
+        console.error('RCON mute error:', error)
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -86,9 +95,10 @@ export async function POST(request: NextRequest) {
       mute: {
         username: minecraftUsername,
         reason,
-        expiresAt,
+        endsAt,
         isPermanent
-      }
+      },
+      rconMuted,
     })
   } catch (error) {
     console.error('Mute error:', error)
@@ -143,35 +153,23 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Find target user
-    const targetUser = await prisma.user.findUnique({
-      where: { minecraftUsername }
+    // Delete mute by username
+    await prisma.mute.delete({
+      where: { username: minecraftUsername }
     })
 
-    if (!targetUser) {
-      return NextResponse.json(
-        { error: 'Player not found' },
-        { status: 404 }
-      )
+    let rconUnmuted = false
+    try {
+      const response = await executeRconCommand(`unmute ${minecraftUsername}`)
+      rconUnmuted = !!response
+    } catch (error) {
+      console.error('RCON unmute error:', error)
     }
-
-    // Delete active mutes
-    await prisma.mute.deleteMany({
-      where: {
-        userId: targetUser.id,
-        OR: [
-          { expiresAt: null }, // Permanent mutes
-          { expiresAt: { gt: new Date() } } // Active temporary mutes
-        ]
-      }
-    })
-
-    // TODO: Send RCON command to Minecraft server
-    // await sendRCONCommand(`/unmute ${minecraftUsername}`)
 
     return NextResponse.json({
       success: true,
-      message: `${minecraftUsername} has been unmuted`
+      message: `${minecraftUsername} has been unmuted`,
+      rconUnmuted,
     })
   } catch (error) {
     console.error('Unmute error:', error)

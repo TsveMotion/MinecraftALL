@@ -2,6 +2,7 @@ package com.minecraftauth.listeners;
 
 import com.minecraftauth.MinecraftAuthPlugin;
 import com.minecraftauth.database.DatabaseManager;
+import com.minecraftauth.utils.LuckyPermsUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
@@ -82,7 +83,9 @@ public class PlayerJoinListener implements Listener {
                 player.setPlayerListName(displayName);
             }
             
-            // Player is registered but not yet authenticated this session
+            // Player is registered but not yet authenticated this session - assign unverified role
+            LuckyPermsUtils.assignUnverifiedRole(player);
+            
             player.sendMessage(Component.text(""));
             player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                     .color(NamedTextColor.DARK_GRAY));
@@ -103,7 +106,9 @@ public class PlayerJoinListener implements Listener {
             // Start verification timer
             plugin.getVerificationManager().startVerificationTimer(player);
         } else {
-            // Player is not registered at all
+            // Player is not registered at all - assign unverified role
+            LuckyPermsUtils.assignUnverifiedRole(player);
+            
             player.sendMessage(Component.text(""));
             player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                     .color(NamedTextColor.DARK_GRAY));

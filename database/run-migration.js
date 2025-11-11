@@ -4,7 +4,7 @@ const path = require('path');
 
 async function runMigration() {
   const connection = await mysql.createConnection({
-    host: 'ddns.tsvweb.com',
+    host: 'vps1.streetlymc.com',
     port: 3306,
     user: 'authuser',
     password: 'StrongPasswordHere',
@@ -14,7 +14,7 @@ async function runMigration() {
 
   console.log('Connected to database...');
 
-  const sqlFile = path.join(__dirname, 'migrations', '001_add_new_fields.sql');
+  const sqlFile = path.join(__dirname, 'migrations', '002_add_minecraft_uuid.sql');
   const sql = fs.readFileSync(sqlFile, 'utf8');
 
   console.log('Running migration...');

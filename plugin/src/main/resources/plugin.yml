@@ -28,9 +28,14 @@ commands:
     permission: minecraftauth.admin
     
   links:
-    description: View helpful server links
+    description: View important server links
     usage: /links
     permission: minecraftauth.links
+    
+  testrole:
+    description: Test role assignment commands (for testing only)
+    usage: /testrole <setunverified|setverified|check>
+    permission: minecraftauth.admin
     
   mute:
     description: Check mute status
@@ -39,20 +44,30 @@ commands:
 
 permissions:
   minecraftauth.register:
-    description: Allows player to get registration link
+    description: Allows the player to register an account
     default: true
     
   minecraftauth.login:
-    description: Allows player to login
+    description: Allows the player to login
     default: true
     
   minecraftauth.report:
-    description: Allows player to report others
+    description: Allows the player to report issues
     default: true
     
   minecraftauth.links:
-    description: Allows player to view server links
+    description: Allows the player to view server links
     default: true
+    
+  minecraftauth.test:
+    description: Allows testing of role assignments
+    default: op
+    
+  minecraftauth.admin:
+    description: Admin permissions for the auth system
+    default: op
+    children:
+      minecraftauth.test: true
     
   minecraftauth.mute:
     description: Allows player to check own mute status
@@ -60,8 +75,4 @@ permissions:
     
   minecraftauth.mute.check:
     description: Allows checking other players' mute status
-    default: op
-    
-  minecraftauth.admin:
-    description: Admin commands
     default: op

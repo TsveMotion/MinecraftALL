@@ -1,0 +1,1 @@
+{"id":"velocityauthplugin","name":"VelocityAuthPlugin","version":"1.0.0","description":"Authentication plugin that restricts unverified players to lobby","authors":["StreetlySMP"],"dependencies":[{"id":"luckperms","optional":false}],"main":"com.streetlysmp.velocityauth.VelocityAuthPlugin"}

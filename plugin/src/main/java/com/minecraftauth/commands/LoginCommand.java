@@ -2,6 +2,7 @@ package com.minecraftauth.commands;
 
 import com.minecraftauth.MinecraftAuthPlugin;
 import com.minecraftauth.utils.BedrockUtils;
+import com.minecraftauth.utils.LuckyPermsUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
@@ -80,6 +81,9 @@ public class LoginCommand implements CommandExecutor {
             // Add to authenticated players set
             plugin.addAuthenticatedPlayer(player.getUniqueId(), username);
             
+            // Assign verified role
+            LuckyPermsUtils.assignVerifiedRole(player);
+            
             // Send success message
             player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                     .color(NamedTextColor.DARK_GRAY));
@@ -146,6 +150,9 @@ public class LoginCommand implements CommandExecutor {
         
         // Delete the PIN (one-time use after verification)
         plugin.getDatabaseManager().deletePIN(pin);
+        
+        // Assign verified role
+        LuckyPermsUtils.assignVerifiedRole(player);
         
         // Send success message
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

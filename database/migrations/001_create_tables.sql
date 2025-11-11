@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     minecraft_username VARCHAR(16) UNIQUE NOT NULL,
+    minecraft_uuid VARCHAR(36) DEFAULT NULL,
     real_name VARCHAR(100) DEFAULT NULL,
     year_group INT DEFAULT NULL,
     rank_color VARCHAR(20) DEFAULT NULL,
@@ -16,7 +17,8 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_minecraft_username (minecraft_username),
     INDEX idx_email (email),
     INDEX idx_verified (verified),
-    INDEX idx_is_admin (is_admin)
+    INDEX idx_is_admin (is_admin),
+    INDEX idx_minecraft_uuid (minecraft_uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS registration_tokens (

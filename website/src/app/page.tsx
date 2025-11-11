@@ -4,10 +4,23 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Copy, Check, Server, ExternalLink, Shield, Zap, Users, Activity, Wifi, KeyRound, Gamepad2, Smartphone, Monitor, UserCheck } from 'lucide-react'
+import { 
+  Server, 
+  Shield, 
+  Zap, 
+  Users, 
+  KeyRound, 
+  Gamepad2, 
+  UserPlus, 
+  Globe,
+  Activity,
+  CheckCircle,
+  ArrowRight,
+  Sparkles
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const SERVER_IP = process.env.NEXT_PUBLIC_MINECRAFT_SERVER || 'play.streetlymc.com'
 
@@ -29,18 +42,16 @@ interface OnlinePlayer {
 
 export default function Home() {
   const router = useRouter()
-  const [copied, setCopied] = useState(false)
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null)
   const [statusLoading, setStatusLoading] = useState(true)
-  const [pin, setPin] = useState('')
   const [onlinePlayers, setOnlinePlayers] = useState<OnlinePlayer[]>([])
   const [playersLoading, setPlayersLoading] = useState(true)
 
   useEffect(() => {
     fetchServerStatus()
     fetchOnlinePlayers()
-    const statusInterval = setInterval(fetchServerStatus, 10000) // Update every 10s
-    const playersInterval = setInterval(fetchOnlinePlayers, 10000) // Update every 10s
+    const statusInterval = setInterval(fetchServerStatus, 10000)
+    const playersInterval = setInterval(fetchOnlinePlayers, 10000)
     return () => {
       clearInterval(statusInterval)
       clearInterval(playersInterval)
@@ -75,406 +86,311 @@ export default function Home() {
     }
   }
 
-  const copyServerIP = () => {
-    navigator.clipboard.writeText(SERVER_IP)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const handlePinSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (pin.length === 6) {
-      // Store PIN in sessionStorage so registration page can use it
-      sessionStorage.setItem('bedrock_pin', pin)
-      router.push('/register')
-    }
-  }
-
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 relative overflow-hidden">
+      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[128px] animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[128px] animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-cyan-600/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '4s' }}></div>
       </div>
 
-      <div className="max-w-5xl w-full space-y-8 relative z-10">
-        {/* Header */}
-        <div className="text-center space-y-4 animate-fade-in">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-blue-500">
-            Streetly SMP
-          </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-slate-300 font-light px-4">
-            Hosted & Sponsored by TSVWEB.CO.UK
-          </p>
-        </div>
-        {/* Server Status & IP Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Server IP Card */}
-          <Card className="lg:col-span-2 bg-slate-900/70 border border-blue-500/30 backdrop-blur-md shadow-2xl shadow-blue-900/30 hover:border-blue-500/60 transition-all duration-300">
-            <CardHeader className="text-center pb-3">
-              <CardTitle className="text-white flex items-center justify-center gap-3 text-xl sm:text-2xl">
-                <Server className="w-7 h-7 text-blue-300" />
-                Server Address
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-slate-950/80 p-4 sm:p-6 rounded-xl border border-blue-500/20">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-                  <code className="text-lg sm:text-2xl md:text-3xl font-mono text-white font-semibold tracking-wide text-center sm:text-left break-all">{SERVER_IP}</code>
-                  <Button
-                    onClick={copyServerIP}
-                    variant="outline"
-                    className="w-full sm:w-auto justify-center flex items-center gap-2 bg-blue-600 hover:bg-blue-700 border-blue-500 text-white transition-all transform hover:scale-105"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-5 h-5" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-5 h-5" />
-                        Copy IP
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center justify-center gap-2 text-slate-300 text-xs sm:text-sm">
-                <Activity className="w-4 h-4 text-blue-300" />
-                <span>Java Edition • Bedrock (Port 19132)</span>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]"></div>
 
-          {/* Server Status Card */}
-          <Card className="bg-slate-900/70 border border-emerald-500/30 backdrop-blur-md shadow-2xl shadow-emerald-900/20">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-white flex items-center gap-2 text-lg">
-                <Wifi className="w-6 h-6 text-emerald-300" />
-                Server Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              {statusLoading ? (
-                <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto"></div>
-                </div>
-              ) : serverStatus?.online ? (
-                <>
-                  <div className="flex items-center justify-between text-slate-200">
-                    <span>Status</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                      <span className="text-emerald-300 font-semibold">Online</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-200">
-                    <span>Players</span>
-                    <span className="text-white font-semibold">
-                      {serverStatus.players?.online || 0}/{serverStatus.players?.max || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-200">
-                    <span>Version</span>
-                    <span className="text-white font-mono text-xs sm:text-sm">
-                      {serverStatus.version || 'N/A'}
-                    </span>
-                  </div>
-                  {serverStatus.ping && (
-                    <div className="flex items-center justify-between text-slate-200">
-                      <span>Ping</span>
-                      <span className="text-emerald-300 font-semibold">{serverStatus.ping}ms</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-4 space-y-2">
-                  <div className="w-2 h-2 bg-red-400 rounded-full mx-auto"></div>
-                  <span className="text-red-300 font-semibold">Offline</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Online Players List */}
-        <Card className="bg-slate-900/70 border-emerald-500/30 backdrop-blur-md shadow-2xl">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <UserCheck className="w-6 h-6 text-emerald-400" />
-                <div>
-                  <CardTitle className="text-white text-xl">Players Online</CardTitle>
-                  <CardDescription className="text-slate-400">
-                    {onlinePlayers.length} {onlinePlayers.length === 1 ? 'player' : 'players'} currently playing
-                  </CardDescription>
-                </div>
-              </div>
-              <Badge variant="success" className="text-sm px-3 py-1">
-                LIVE
+      <div className="relative z-10">
+        {/* Hero Section */}
+        <div className="container mx-auto px-4 pt-20 pb-16">
+          <div className="max-w-6xl mx-auto">
+            {/* Status Badge */}
+            <div className="flex justify-center mb-6 animate-fade-in">
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "px-4 py-1.5 text-sm font-medium backdrop-blur-sm border-2 transition-all",
+                  serverStatus?.online 
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                    : "bg-red-500/10 border-red-500/30 text-red-400"
+                )}
+              >
+                <div className={cn(
+                  "w-2 h-2 rounded-full mr-2 animate-pulse",
+                  serverStatus?.online ? "bg-emerald-400" : "bg-red-400"
+                )}></div>
+                {serverStatus?.online ? 'Server Online' : 'Server Offline'}
+                {serverStatus?.players && (
+                  <span className="ml-2">• {serverStatus.players.online} Players Online</span>
+                )}
               </Badge>
             </div>
-          </CardHeader>
-          <CardContent>
-            {playersLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto"></div>
-                <p className="text-slate-400 text-sm mt-3">Loading players...</p>
-              </div>
-            ) : onlinePlayers.length > 0 ? (
-              <div className="max-h-64 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                {onlinePlayers.map((player) => (
-                  <div 
-                    key={player.id}
-                    className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-emerald-500/30 transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                      <div>
-                        <p className="text-white font-mono text-sm">{player.minecraftUsername}</p>
-                        {player.realName && (
-                          <p className="text-slate-400 text-xs">{player.realName}</p>
-                        )}
-                      </div>
-                    </div>
-                    {player.yearGroup && (
-                      <Badge 
-                        className="text-xs"
-                        style={{
-                          backgroundColor: player.rankColor ? `${player.rankColor}30` : undefined,
-                          borderColor: player.rankColor ? `${player.rankColor}60` : undefined,
-                          color: player.rankColor || undefined
-                        }}
-                      >
-                        Year {player.yearGroup}
-                      </Badge>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 space-y-2">
-                <Users className="w-12 h-12 text-slate-600 mx-auto" />
-                <p className="text-slate-400">No players online right now</p>
-                <p className="text-slate-500 text-sm">Be the first to join!</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* How to Join - Clear Instructions for Both Editions */}
-        <div className="space-y-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-            How to Join
-          </h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* JAVA EDITION */}
-            <Card className="bg-gradient-to-br from-blue-600/30 to-cyan-600/30 border-blue-400 backdrop-blur-sm shadow-2xl shadow-blue-500/20">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-500/40 rounded-lg">
-                    <Monitor className="w-6 h-6 text-blue-200" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-white text-xl flex items-center gap-2">
-                      JAVA Edition
-                      <Badge variant="info" className="text-xs">PC/Mac/Linux</Badge>
-                    </CardTitle>
-                    <CardDescription className="text-blue-100">
-                      For computers & laptops
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm mb-1">Join the Server</p>
-                      <p className="text-blue-50 text-sm">Add server: <code className="bg-slate-950/80 px-2 py-1 rounded text-blue-200 font-mono">{SERVER_IP}</code></p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm mb-1">Get Registration Link</p>
-                      <p className="text-blue-50 text-sm">Type: <code className="bg-slate-950/80 px-2 py-1 rounded text-blue-200 font-mono">/register</code></p>
-                      <p className="text-blue-100 text-xs mt-1">You'll receive a clickable link in chat</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm mb-1">Complete Registration</p>
-                      <p className="text-blue-50 text-sm">Click the link and fill out the form</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm mb-1">Start Playing!</p>
-                      <p className="text-blue-50 text-sm">Login: <code className="bg-slate-950/80 px-2 py-1 rounded text-blue-200 font-mono">/login &lt;password&gt;</code></p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Main Heading */}
+            <div className="text-center space-y-6 mb-12 animate-fade-in">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm mb-4">
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                <span className="text-sm text-blue-300 font-medium">Premium Minecraft Network</span>
+              </div>
+              
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight">
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 animate-gradient">
+                  Streetly SMP
+                </span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-slate-300 font-light max-w-2xl mx-auto leading-relaxed">
+                Experience Minecraft like never before on our premium network. 
+                <span className="block mt-2 text-blue-300 font-medium">Join thousands of players today.</span>
+              </p>
+            </div>
 
-            {/* BEDROCK EDITION */}
-            <Card className="bg-gradient-to-br from-purple-600/30 to-pink-600/30 border-purple-400 backdrop-blur-sm shadow-2xl shadow-purple-500/20">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-500/40 rounded-lg">
-                    <Smartphone className="w-6 h-6 text-purple-200" />
+            {/* Server IP Card - Premium Design */}
+            <div className="max-w-3xl mx-auto mb-12">
+              <Card className="bg-slate-900/60 border-2 border-blue-500/30 backdrop-blur-xl shadow-2xl shadow-blue-500/20 hover:shadow-blue-500/30 hover:border-blue-500/50 transition-all duration-500">
+                <CardContent className="p-8">
+                  <div className="flex items-center justify-center gap-3 mb-6">
+                    <Server className="w-6 h-6 text-blue-400" />
+                    <h3 className="text-xl font-semibold text-white">Server Address</h3>
                   </div>
-                  <div>
-                    <CardTitle className="text-white text-xl flex items-center gap-2">
-                      BEDROCK Edition
-                      <Badge variant="purple" className="text-xs">Mobile/Console</Badge>
-                    </CardTitle>
-                    <CardDescription className="text-purple-100">
-                      For phones, tablets, Xbox, PlayStation, Switch
-                    </CardDescription>
+                  
+                  <div className="bg-slate-950/80 rounded-xl p-6 border border-blue-500/20 mb-6">
+                    <code className="text-3xl md:text-4xl font-mono text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-300 font-bold tracking-wider block text-center">
+                      {SERVER_IP}
+                    </code>
                   </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button 
+                      size="lg"
+                      onClick={() => window.open(`minecraft://${SERVER_IP}`, '_blank')}
+                      className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 text-lg px-8 py-6 group"
+                    >
+                      <Gamepad2 className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                      Join Server Now
+                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                    
+                    <Button 
+                      size="lg"
+                      variant="outline"
+                      onClick={() => navigator.clipboard.writeText(SERVER_IP)}
+                      className="border-2 border-blue-500/30 hover:bg-blue-500/10 text-white font-semibold px-8 py-6 text-lg"
+                    >
+                      Copy IP Address
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-20">
+              <Button 
+                size="lg"
+                onClick={() => router.push('/register')}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 px-12 py-6 text-lg group"
+              >
+                <UserPlus className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                Create Account
+              </Button>
+              
+              <Button 
+                size="lg"
+                variant="outline"
+                onClick={() => router.push('/login')}
+                className="border-2 border-slate-600 hover:bg-slate-800 text-white font-semibold px-12 py-6 text-lg"
+              >
+                <KeyRound className="mr-2 h-5 w-5" />
+                Login
+              </Button>
+            </div>
+
+            {/* Features Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+              {/* Feature 1 */}
+              <Card className="bg-slate-900/40 border-slate-700/50 backdrop-blur-md hover:bg-slate-900/60 hover:border-blue-500/30 transition-all duration-300 group">
+                <CardHeader>
+                  <div className="inline-flex p-4 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-2xl mb-4 group-hover:scale-110 transition-transform">
+                    <Shield className="w-8 h-8 text-blue-400" />
+                  </div>
+                  <CardTitle className="text-white text-2xl">Secure & Protected</CardTitle>
+                  <CardDescription className="text-slate-400 text-base">
+                    Advanced security with verified accounts. Your data is encrypted and protected with industry-leading protocols.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Feature 2 */}
+              <Card className="bg-slate-900/40 border-slate-700/50 backdrop-blur-md hover:bg-slate-900/60 hover:border-purple-500/30 transition-all duration-300 group">
+                <CardHeader>
+                  <div className="inline-flex p-4 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl mb-4 group-hover:scale-110 transition-transform">
+                    <Zap className="w-8 h-8 text-purple-400" />
+                  </div>
+                  <CardTitle className="text-white text-2xl">Lightning Fast</CardTitle>
+                  <CardDescription className="text-slate-400 text-base">
+                    High-performance infrastructure with minimal latency. Experience smooth, lag-free gameplay 24/7.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Feature 3 */}
+              <Card className="bg-slate-900/40 border-slate-700/50 backdrop-blur-md hover:bg-slate-900/60 hover:border-emerald-500/30 transition-all duration-300 group">
+                <CardHeader>
+                  <div className="inline-flex p-4 bg-gradient-to-br from-emerald-500/20 to-green-500/20 rounded-2xl mb-4 group-hover:scale-110 transition-transform">
+                    <Users className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <CardTitle className="text-white text-2xl">Active Community</CardTitle>
+                  <CardDescription className="text-slate-400 text-base">
+                    Join a thriving community of Minecraft enthusiasts. Make friends and build together.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+
+            {/* How to Join Section */}
+            <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-slate-700/50 mb-16">
+              <div className="text-center mb-10">
+                <Badge variant="outline" className="mb-4 px-4 py-2 text-sm font-medium bg-blue-500/10 border-blue-500/20 text-blue-400">
+                  Getting Started
+                </Badge>
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                  How to Join
+                </h2>
+                <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                  Follow these simple steps to start your adventure
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Step 1 */}
+                <div className="text-center space-y-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 text-white text-2xl font-bold mb-4 shadow-lg shadow-blue-500/30">
+                    1
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">Create Account</h3>
+                  <p className="text-slate-400">
+                    Register on our website with your Minecraft username and create a secure password.
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm mb-1">Join the Server</p>
-                      <p className="text-purple-50 text-sm">Server: <code className="bg-slate-950/80 px-2 py-1 rounded text-purple-200 font-mono">{SERVER_IP}</code></p>
-                      <p className="text-purple-100 text-xs mt-1">Port: <code className="bg-slate-950/80 px-1 py-0.5 rounded text-purple-200 font-mono">19132</code></p>
-                    </div>
+
+                {/* Step 2 */}
+                <div className="text-center space-y-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-white text-2xl font-bold mb-4 shadow-lg shadow-purple-500/30">
+                    2
                   </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm mb-1">Get Your PIN</p>
-                      <p className="text-purple-50 text-sm">Type: <code className="bg-slate-950/80 px-2 py-1 rounded text-purple-200 font-mono">/register</code></p>
-                      <p className="text-purple-100 text-xs mt-1">You'll receive a 6-digit PIN code</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm mb-1">Enter PIN Below</p>
-                      <form onSubmit={handlePinSubmit} className="space-y-2 mt-2">
-                        <Input
-                          type="text"
-                          maxLength={6}
-                          value={pin}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '')
-                            setPin(value)
-                          }}
-                          placeholder="000000"
-                          className="text-center text-2xl tracking-widest font-mono bg-slate-900/50 border-purple-400/50 text-white placeholder:text-slate-600"
-                        />
-                        <Button 
-                          type="submit"
-                          disabled={pin.length !== 6}
-                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-slate-700 disabled:to-slate-700"
-                          size="sm"
-                        >
-                          Continue →
-                        </Button>
-                      </form>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
-                    <div className="flex-1">
-                      <p className="text-white font-semibold text-sm mb-1">Complete & Play!</p>
-                      <p className="text-purple-50 text-sm">Fill out the form and start playing</p>
-                    </div>
-                  </div>
+                  <h3 className="text-xl font-semibold text-white">Verify Account</h3>
+                  <p className="text-slate-400">
+                    Complete the verification process to unlock full server access.
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Step 3 */}
+                <div className="text-center space-y-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-600 to-green-600 text-white text-2xl font-bold mb-4 shadow-lg shadow-emerald-500/30">
+                    3
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">Start Playing</h3>
+                  <p className="text-slate-400">
+                    Join the lobby and explore our Survival server and community.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-10 text-center">
+                <Button 
+                  size="lg"
+                  onClick={() => router.push('/register')}
+                  className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-semibold shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 px-12 py-6 text-lg"
+                >
+                  Get Started Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Stats Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16">
+              <Card className="bg-gradient-to-br from-blue-900/40 to-blue-950/40 border-blue-500/30 backdrop-blur-md text-center">
+                <CardContent className="p-6">
+                  <Activity className="w-10 h-10 text-blue-400 mx-auto mb-3" />
+                  <div className="text-4xl font-bold text-white mb-2">
+                    {serverStatus?.players?.online || 0}
+                  </div>
+                  <div className="text-slate-400 font-medium">Players Online</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-900/40 to-purple-950/40 border-purple-500/30 backdrop-blur-md text-center">
+                <CardContent className="p-6">
+                  <Globe className="w-10 h-10 text-purple-400 mx-auto mb-3" />
+                  <div className="text-4xl font-bold text-white mb-2">99.9%</div>
+                  <div className="text-slate-400 font-medium">Uptime</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-emerald-900/40 to-emerald-950/40 border-emerald-500/30 backdrop-blur-md text-center">
+                <CardContent className="p-6">
+                  <CheckCircle className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+                  <div className="text-4xl font-bold text-white mb-2">24/7</div>
+                  <div className="text-slate-400 font-medium">Support</div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
 
-        {/* Existing Players - Quick Access */}
-        <Card className="bg-slate-800/40 border-green-500/30 backdrop-blur-sm shadow-xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-white text-xl flex items-center justify-center gap-2">
-              <Shield className="w-6 h-6 text-green-400" />
-              Already Registered?
-            </CardTitle>
-            <CardDescription className="text-slate-400">
-              Access your dashboard or login in-game
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-950/40 p-4 rounded-lg border border-green-500/20 text-center">
-                <p className="text-green-400 font-semibold mb-2">In-Game Login</p>
-                <code className="text-green-300 bg-slate-950/60 px-3 py-2 rounded font-mono text-sm">/login &lt;password&gt;</code>
-              </div>
-              <Link href="/login" className="block">
-                <Button className="w-full h-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg transform hover:scale-105 transition-all">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Web Dashboard
-                </Button>
-              </Link>
+        {/* Footer */}
+        <footer className="border-t border-slate-800 bg-slate-950/50 backdrop-blur-xl">
+          <div className="container mx-auto px-4 py-8">
+            <div className="text-center space-y-3">
+              <p className="text-slate-400 text-base">
+                Hosted & Sponsored by{' '}
+                <a 
+                  href="https://tsvweb.co.uk" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                >
+                  TSVWEB.CO.UK
+                </a>
+              </p>
+              <p className="text-slate-500 text-sm">
+                © 2025 Streetly SMP Network. All rights reserved.
+              </p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Features Section - Enhanced */}
-        <Card className="bg-slate-800/40 border-slate-700/50 backdrop-blur-sm shadow-xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-white text-xl sm:text-2xl">Why Play on Streetly SMP?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-              <div className="text-center p-6 bg-gradient-to-br from-slate-900/60 to-slate-800/60 rounded-xl border border-slate-700/50 hover:border-blue-500/30 transition-all transform hover:-translate-y-1">
-                <div className="inline-flex p-3 bg-blue-500/20 rounded-full mb-3">
-                  <Shield className="w-8 h-8 text-blue-400" />
-                </div>
-                <h3 className="text-white font-semibold text-lg mb-2">Secure</h3>
-                <p className="text-slate-400 text-sm">Military-grade bcrypt encryption protects your account</p>
-              </div>
-              <div className="text-center p-6 bg-gradient-to-br from-slate-900/60 to-slate-800/60 rounded-xl border border-slate-700/50 hover:border-purple-500/30 transition-all transform hover:-translate-y-1">
-                <div className="inline-flex p-3 bg-purple-500/20 rounded-full mb-3">
-                  <Zap className="w-8 h-8 text-purple-400" />
-                </div>
-                <h3 className="text-white font-semibold text-lg mb-2">Lightning Fast</h3>
-                <p className="text-slate-400 text-sm">Instant authentication with optimized server performance</p>
-              </div>
-              <div className="text-center p-6 bg-gradient-to-br from-slate-900/60 to-slate-800/60 rounded-xl border border-slate-700/50 hover:border-green-500/30 transition-all transform hover:-translate-y-1">
-                <div className="inline-flex p-3 bg-green-500/20 rounded-full mb-3">
-                  <Users className="w-8 h-8 text-green-400" />
-                </div>
-                <h3 className="text-white font-semibold text-lg mb-2">User Friendly</h3>
-                <p className="text-slate-400 text-sm">Simple 4-step registration gets you playing in minutes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Footer - Enhanced with link */}
-        <div className="text-center space-y-2 pt-4">
-          <p className="text-slate-400 text-sm">
-            Powered by{' '}
-            <a 
-              href="https://tsvweb.co.uk" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 font-semibold transition-colors underline decoration-blue-400/30 hover:decoration-blue-300"
-            >
-              tsvweb.co.uk
-            </a>
-          </p>
-          <p className="text-slate-500 text-xs">TSV Network © 2025 • Minecraft Authentication System</p>
-        </div>
+          </div>
+        </footer>
       </div>
-    </main>
+
+      <style jsx global>{`
+        @keyframes gradient {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+        
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient 5s ease infinite;
+        }
+        
+        .animate-fade-in {
+          animation: fade-in 0.8s ease-out forwards;
+        }
+      `}</style>
+    </div>
   )
 }

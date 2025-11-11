@@ -6,9 +6,9 @@ import { prisma } from '@/lib/prisma'
  * 1. Email is 20-tsvetanov-k@thestreetlyacademy.co.uk
  * 2. OR user is in the Admin table
  */
-export async function isUserAdmin(userId: number, email: string): Promise<boolean> {
+export async function isUserAdmin(userId: number, email: string | null): Promise<boolean> {
   // Check hardcoded admin email
-  if (email === '20-tsvetanov-k@thestreetlyacademy.co.uk') {
+  if (email && email === '20-tsvetanov-k@thestreetlyacademy.co.uk') {
     return true
   }
 
@@ -23,7 +23,7 @@ export async function isUserAdmin(userId: number, email: string): Promise<boolea
 /**
  * Get admin user from cookies
  */
-export async function getAdminUserFromCookies(cookies: any): Promise<{ userId: number; email: string } | null> {
+export async function getAdminUserFromCookies(cookies: any): Promise<{ userId: number; email: string | null } | null> {
   const sessionCookie = cookies.get('session')
   if (!sessionCookie) {
     return null

@@ -14,7 +14,7 @@ export async function GET(
     const signature = request.headers.get('X-MC-SIGN')
     const bodyString = params.username || ''
     
-    if (!verifyPluginRequest(bodyString, signature)) {
+    if (!verifyPluginRequest(bodyString, signature ?? undefined)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

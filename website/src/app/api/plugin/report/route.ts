@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const signature = request.headers.get('X-MC-SIGN')
 
-    if (!verifyPluginRequest(body, signature)) {
+    if (!verifyPluginRequest(body, signature ?? undefined)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

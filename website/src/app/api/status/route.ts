@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getRconServerStatus } from '@/lib/rcon'
 import { getCached, setCache } from '@/lib/redis'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -79,6 +80,8 @@ export async function GET() {
       players: enrichedPlayers,
     }
 
+    const rawData = JSON.parse(JSON.stringify(response)) as Prisma.InputJsonValue
+
     // Cache for 5 seconds
     await setCache('server:status', response, 5)
 
@@ -88,7 +91,7 @@ export async function GET() {
         online: response.online,
         tps: response.tps,
         players: response.playersCount,
-        raw: response,
+        raw: rawData,
       },
     })
 

@@ -37,6 +37,11 @@ commands:
     usage: /testrole <setunverified|setverified|check>
     permission: minecraftauth.admin
     
+  setupauth:
+    description: Setup LuckPerms groups for authentication system
+    usage: /setupauth
+    permission: minecraftauth.setup
+    
   mute:
     description: Check mute status
     usage: /mute [player]
@@ -63,11 +68,16 @@ permissions:
     description: Allows testing of role assignments
     default: op
     
+  minecraftauth.setup:
+    description: Allows setting up LuckPerms groups
+    default: op
+    
   minecraftauth.admin:
     description: Admin permissions for the auth system
     default: op
     children:
       minecraftauth.test: true
+      minecraftauth.setup: true
     
   minecraftauth.mute:
     description: Allows player to check own mute status

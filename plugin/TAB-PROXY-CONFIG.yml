@@ -1,0 +1,75 @@
+# TAB Plugin Configuration - Velocity Proxy
+# Place this file in: velocity/plugins/TAB/config.yml
+# This config manages the global header/footer and tab list formatting across all backend servers
+
+# Enable header and footer
+header-footer:
+  enabled: true
+  header:
+    - "<gold><bold>Streetly MC</bold></gold>"
+    - "<gray>Sponsored & hosted by </gray><white>TSVWEB.co.uk</white>"
+    - "<gray>play.streetlymc.com</gray>"
+  footer:
+    - ""
+    - "<gray>Lobby: %server-online% online | Ping: %ping%</gray>"
+    - "<gray>Players: %online% / %maxplayers%</gray>"
+
+# Scoreboard (disable on proxy, handle per-server)
+scoreboard:
+  enabled: false
+
+# Group formatting - TAB will use LuckPerms groups automatically
+groups:
+  default:
+    tabprefix: "&c[Unverified] &7"
+    tagprefix: "&c[Unverified] &7"
+    tabsuffix: ""
+    tagsuffix: ""
+  verified:
+    tabprefix: "&a[Verified] &7"
+    tagprefix: "&a[Verified] &7"
+    tabsuffix: ""
+    tagsuffix: ""
+
+# Let TAB auto-detect LuckPerms groups
+assign-groups-by-permissions: true
+primary-group-finding-list:
+  - "verified"
+  - "default"
+
+# Global settings
+enable-nametag-features: true
+unlimited-nametag-mode:
+  enabled: true
+  dynamic-lines: []
+  static-lines: ["%luckperms-prefix%%player%%luckperms-suffix%"]
+
+# Placeholder refresh rates (ms)
+placeholderapi-refresh-intervals:
+  default-refresh-interval: 1000
+  server:
+    %server-online%: 1000
+    %ping%: 500
+    %online%: 1000
+    %maxplayers%: 5000
+
+# Belowname (disable to avoid clutter)
+belowname-objective:
+  enabled: false
+
+# Yellow number in tab list (disable)
+yellow-number-in-tablist:
+  enabled: false
+
+# Per-server configuration
+per-server:
+  lobby:
+    header:
+      - "<gold><bold>Streetly MC</bold></gold> <gray>- Lobby</gray>"
+      - "<gray>Sponsored & hosted by</gray> <white>TSVWEB.co.uk</white>"
+      - "<gray>play.streetlymc.com</gray>"
+  survival:
+    header:
+      - "<gold><bold>Streetly MC</bold></gold> <gray>- Survival</gray>"
+      - "<gray>Sponsored & hosted by</gray> <white>TSVWEB.co.uk</white>"
+      - "<gray>play.streetlymc.com</gray>"

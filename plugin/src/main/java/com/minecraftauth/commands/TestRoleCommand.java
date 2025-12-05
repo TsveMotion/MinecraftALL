@@ -7,6 +7,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.types.InheritanceNode;
+import net.luckperms.api.node.NodeType;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -96,7 +97,7 @@ public class TestRoleCommand implements CommandExecutor {
                     .color(NamedTextColor.GOLD));
             
             boolean hasGroups = false;
-            for (InheritanceNode node : user.getNodes(InheritanceNode.class)) {
+            for (InheritanceNode node : user.getNodes(NodeType.INHERITANCE)) {
                 player.sendMessage(Component.text("- " + node.getGroupName())
                         .color(NamedTextColor.WHITE));
                 hasGroups = true;

@@ -131,15 +131,17 @@ export async function getRoleByUsername(username: string) {
     },
   })
 
-  if (!user || user.roles.length === 0) {
+  if (!user) {
     return null
   }
 
-  const role = user.roles[0].role
+  const role = user.roles.length > 0 ? user.roles[0].role : null
 
   return {
-    symbol: role.symbol,
-    colorHex: role.colorHex,
+    symbol: role?.symbol || '★',
+    colorHex: role?.colorHex || '#FFFFFF',
     isAdmin: user.isAdmin,
+    fullName: user.fullName,
+    yearGroup: user.yearGroup,
   }
 }

@@ -1,10 +1,10 @@
 # MinecraftAuth Configuration
 database:
-  host: vps1.streetlymc.com
-  port: 3306
-  database: minecraft_auth
-  username: authuser
-  password: StrongPasswordHere
+  host: 51.77.222.110
+  port: 5420
+  database: postgres
+  username: postgres
+  password: BNUMjXgfmg9ziwDgQ8SSdXpDRs8LxbC44fBhtvkGpg4qM8BogVHLaU0iYlXY211V
   pool-size: 10
 
   
@@ -21,6 +21,18 @@ api:
 # Discord Webhook for Reports
 discord:
   webhook-url: DISCORD_WEBHOOK_URL_HERE
+
+# Web API Configuration (for TAB list full names and year groups)
+web-api:
+  url: https://streetlymc.com
+  key: f0d8438bf14eb25723aec7f31cde1666d5b3b3b2daebdf084c95fbd3d3ffa82d
+
+# Auth Flow Configuration
+auth:
+  kickAfterRegister: true
+  registerKickTitle: "&a&lRegistration Complete ✅"
+  registerKickMessage: "&7This is normal.\n&eRejoin and use &a/login &eto sign in to your new account."
+  loginMessage: "&aLogged in ✅ — you can now use &e/server &ato switch realms."
 
 messages:
   must-register: "&cYou must register an account to play."

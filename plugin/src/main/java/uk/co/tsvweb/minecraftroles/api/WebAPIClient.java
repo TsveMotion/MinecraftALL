@@ -183,7 +183,16 @@ public class WebAPIClient {
             String symbol = roleObj.get("symbol").getAsString();
             String colorHex = roleObj.get("colorHex").getAsString();
             boolean isAdmin = roleObj.get("isAdmin").getAsBoolean();
-            return new PlayerRole(symbol, colorHex, isAdmin);
+            
+            // Get full name and year group from user data
+            String fullName = json.has("fullName") && !json.get("fullName").isJsonNull() 
+                ? json.get("fullName").getAsString() 
+                : null;
+            Integer yearGroup = json.has("yearGroup") && !json.get("yearGroup").isJsonNull() 
+                ? json.get("yearGroup").getAsInt() 
+                : null;
+            
+            return new PlayerRole(symbol, colorHex, isAdmin, fullName, yearGroup);
         }
         return null;
     }

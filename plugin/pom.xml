@@ -53,6 +53,10 @@
                                     <pattern>com.google.gson</pattern>
                                     <shadedPattern>com.minecraftauth.gson</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>org.postgresql</pattern>
+                                    <shadedPattern>com.minecraftauth.postgresql</shadedPattern>
+                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>
@@ -76,7 +80,7 @@
                 <enabled>true</enabled>
             </snapshots>
             <releases>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </releases>
         </repository>
         <!-- OpenCollab hosts Floodgate/Geyser releases -->
@@ -89,6 +93,18 @@
             <releases>
                 <enabled>true</enabled>
             </releases>
+        </repository>
+        <repository>
+            <id>luckperms</id>
+            <url>https://repo.lucko.me/</url>
+        </repository>
+        <repository>
+            <id>spigotmc-repo</id>
+            <url>https://repo.md-5.net/content/repositories/public/</url>
+        </repository>
+        <repository>
+            <id>opencollab-snapshot</id>
+            <url>https://repo.opencollab.dev/maven-snapshots/</url>
         </repository>
     </repositories>
 
@@ -108,12 +124,27 @@
             <version>5.1.0</version>
         </dependency>
         
-        <!-- MySQL Connector -->
+        <!-- LuckPerms API for permissions integration -->
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>8.3.0</version>
+            <groupId>net.luckperms</groupId>
+            <artifactId>api</artifactId>
+            <version>5.4</version>
             <scope>provided</scope>
+        </dependency>
+        
+        <!-- Floodgate API for Bedrock player support -->
+        <dependency>
+            <groupId>org.geysermc.floodgate</groupId>
+            <artifactId>api</artifactId>
+            <version>2.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PostgreSQL Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.1</version>
         </dependency>
         
         <!-- BCrypt for password hashing -->

@@ -1,10 +1,11 @@
 package com.minecraftauth.commands;
 
 import com.minecraftauth.MinecraftAuthPlugin;
-import com.minecraftauth.utils.BedrockUtils;
+import com.minecraftauth.utils.FloodgateSupport;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -41,7 +42,7 @@ public class RegisterCommand implements CommandExecutor {
         }
         
         // Check if player is on Bedrock Edition
-        if (BedrockUtils.isBedrock(player)) {
+        if (FloodgateSupport.isAvailable() && FloodgateSupport.isBedrockPlayer(player)) {
             handleBedrockRegistration(player);
         } else {
             handleJavaRegistration(player);
@@ -92,70 +93,42 @@ public class RegisterCommand implements CommandExecutor {
     
     /**
      * Handle registration for Bedrock Edition players
-     * Generates a PIN and displays a form UI with a button to open the registration page
+     * Generates a 6-digit PIN for in-game registration (no website link needed)
      */
     private void handleBedrockRegistration(Player player) {
         String username = player.getName();
         
-        // Generate registration token for the website
-        String token = plugin.getDatabaseManager().createRegistrationToken(username);
-        
-        if (token == null) {
-            player.sendMessage(Component.text("An error occurred. Please contact an administrator.")
-                    .color(NamedTextColor.RED));
-            return;
-        }
-        
         // Generate a 6-digit PIN for Bedrock player
-        String pin = BedrockUtils.generatePIN();
+        String pin = FloodgateSupport.createPINSession(username, player.getUniqueId());
         
-        // Store PIN in database
-        if (!plugin.getDatabaseManager().storePIN(username, pin)) {
-            player.sendMessage(Component.text("An error occurred storing your PIN. Please contact an administrator.")
-                    .color(NamedTextColor.RED));
-            return;
-        }
-        
-        // Build registration URL
-        String websiteUrl = plugin.getConfig().getString("registration.website-url");
-        String registrationUrl = websiteUrl + "/register?token=" + token;
-        
-        // Send PIN information in chat (Bedrock players can read but not copy links)
+        // Send PIN information in chat
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 .color(NamedTextColor.DARK_GRAY));
-        player.sendMessage(Component.text("Bedrock Registration")
+        player.sendMessage(Component.text("🎮 Bedrock Registration")
                 .color(NamedTextColor.GREEN));
         player.sendMessage(Component.text(""));
+        player.sendMessage(Component.text("Welcome Bedrock player!")
+                .color(NamedTextColor.YELLOW));
+        player.sendMessage(Component.text(""));
         player.sendMessage(Component.text("Your PIN: " + pin)
-                .color(NamedTextColor.GOLD));
+                .color(NamedTextColor.GOLD)
+                .decorate(TextDecoration.BOLD));
         player.sendMessage(Component.text(""));
-        player.sendMessage(Component.text("1. Click the button in the popup to open the registration page")
+        player.sendMessage(Component.text("To complete registration, enter:")
                 .color(NamedTextColor.YELLOW));
-        player.sendMessage(Component.text("2. Enter your PIN on the website to link your account")
-                .color(NamedTextColor.YELLOW));
-        player.sendMessage(Component.text("3. Set your password on the website")
-                .color(NamedTextColor.YELLOW));
-        player.sendMessage(Component.text("4. Use /login <password> or /login <pin> to authenticate")
-                .color(NamedTextColor.YELLOW));
+        player.sendMessage(Component.text("/register " + pin + " <email> <password>")
+                .color(NamedTextColor.AQUA));
         player.sendMessage(Component.text(""));
-        player.sendMessage(Component.text("⚠ Your PIN expires in 30 minutes")
+        player.sendMessage(Component.text("Example:")
+                .color(NamedTextColor.GRAY));
+        player.sendMessage(Component.text("/register " + pin + " me@example.com MyPassword123")
+                .color(NamedTextColor.GRAY));
+        player.sendMessage(Component.text(""));
+        player.sendMessage(Component.text("⚠ PIN expires in 10 minutes")
                 .color(NamedTextColor.RED));
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 .color(NamedTextColor.DARK_GRAY));
         
-        // Create and send Bedrock Form UI
-        createBedrockForm(player, registrationUrl, pin);
-        
         plugin.getLogger().info("Generated PIN " + pin + " for Bedrock player: " + username);
-    }
-    
-    /**
-     * Create and display a Bedrock Form UI popup with registration information
-     * Note: Floodgate integration disabled - forms not available
-     */
-    private void createBedrockForm(Player player, String registrationUrl, String pin) {
-        // Floodgate integration disabled
-        // Install Floodgate plugin separately for Bedrock form support
-        plugin.getLogger().info("Bedrock form display skipped (Floodgate not integrated)");
     }
 }

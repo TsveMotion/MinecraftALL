@@ -24,7 +24,8 @@ public class DatabaseManager {
     public boolean initialize() {
         try {
             HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(String.format("jdbc:mysql://%s:%d/%s?useSSL=false&allowPublicKeyRetrieval=true",
+            config.setDriverClassName("com.minecraftauth.postgresql.Driver");
+            config.setJdbcUrl(String.format("jdbc:postgresql://%s:%d/%s?sslmode=disable",
                     plugin.getConfig().getString("database.host"),
                     plugin.getConfig().getInt("database.port"),
                     plugin.getConfig().getString("database.database")));
@@ -40,11 +41,107 @@ public class DatabaseManager {
             dataSource = new HikariDataSource(config);
             
             plugin.getLogger().info("Database connection established successfully!");
+            
+            // Create tables if they don't exist
+            createTablesIfNotExist();
+            
             return true;
         } catch (Exception e) {
             plugin.getLogger().severe("Failed to initialize database: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+    
+    /**
+     * Create database tables if they don't exist
+     */
+    private void createTablesIfNotExist() {
+        try (Connection conn = getConnection()) {
+            // Users table
+            String createUsersTable = "CREATE TABLE IF NOT EXISTS users (" +
+                    "id SERIAL PRIMARY KEY, " +
+                    "minecraft_username VARCHAR(16) UNIQUE NOT NULL, " +
+                    "minecraft_uuid VARCHAR(36), " +
+                    "password_hash VARCHAR(255) NOT NULL, " +
+                    "real_name VARCHAR(255), " +
+                    "rank_color VARCHAR(7), " +
+                    "year_group INTEGER, " +
+                    "is_admin BOOLEAN DEFAULT FALSE, " +
+                    "verified BOOLEAN DEFAULT FALSE, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+            
+            // Registration tokens table
+            String createTokensTable = "CREATE TABLE IF NOT EXISTS registration_tokens (" +
+                    "id SERIAL PRIMARY KEY, " +
+                    "token VARCHAR(64) UNIQUE NOT NULL, " +
+                    "minecraft_username VARCHAR(16) NOT NULL, " +
+                    "expires_at TIMESTAMP NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+            
+            // Bedrock PINs table
+            String createPinsTable = "CREATE TABLE IF NOT EXISTS bedrock_pins (" +
+                    "id SERIAL PRIMARY KEY, " +
+                    "minecraft_username VARCHAR(16) NOT NULL, " +
+                    "pin VARCHAR(6) NOT NULL, " +
+                    "expires_at TIMESTAMP NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+            
+            // Bans table
+            String createBansTable = "CREATE TABLE IF NOT EXISTS bans (" +
+                    "id SERIAL PRIMARY KEY, " +
+                    "minecraft_username VARCHAR(16) NOT NULL, " +
+                    "reason TEXT NOT NULL, " +
+                    "is_permanent BOOLEAN DEFAULT FALSE, " +
+                    "expires_at TIMESTAMP, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                    ")";
+            
+            // Reports table
+            String createReportsTable = "CREATE TABLE IF NOT EXISTS reports (" +
+                    "id SERIAL PRIMARY KEY, " +
+                    "reporter_id INTEGER NOT NULL, " +
+                    "reported_id INTEGER NOT NULL, " +
+                    "description TEXT NOT NULL, " +
+                    "status VARCHAR(20) DEFAULT 'pending', " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY (reporter_id) REFERENCES users(id), " +
+                    "FOREIGN KEY (reported_id) REFERENCES users(id)" +
+                    ")";
+            
+            try (PreparedStatement stmt = conn.prepareStatement(createUsersTable)) {
+                stmt.executeUpdate();
+                plugin.getLogger().info("Users table ready");
+            }
+            
+            try (PreparedStatement stmt = conn.prepareStatement(createTokensTable)) {
+                stmt.executeUpdate();
+                plugin.getLogger().info("Registration tokens table ready");
+            }
+            
+            try (PreparedStatement stmt = conn.prepareStatement(createPinsTable)) {
+                stmt.executeUpdate();
+                plugin.getLogger().info("Bedrock PINs table ready");
+            }
+            
+            try (PreparedStatement stmt = conn.prepareStatement(createBansTable)) {
+                stmt.executeUpdate();
+                plugin.getLogger().info("Bans table ready");
+            }
+            
+            try (PreparedStatement stmt = conn.prepareStatement(createReportsTable)) {
+                stmt.executeUpdate();
+                plugin.getLogger().info("Reports table ready");
+            }
+            
+            plugin.getLogger().info("All database tables initialized successfully!");
+            
+        } catch (SQLException e) {
+            plugin.getLogger().warning("Error creating tables: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     

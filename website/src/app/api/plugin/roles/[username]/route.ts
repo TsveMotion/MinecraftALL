@@ -37,6 +37,8 @@ export async function GET(
       return NextResponse.json({
         primaryRole: null,
         isAdmin: false,
+        fullName: null,
+        yearGroup: null,
       })
     }
 
@@ -46,6 +48,8 @@ export async function GET(
         colorHex: roleData.colorHex,
         isAdmin: roleData.isAdmin,
       },
+      fullName: roleData.fullName,
+      yearGroup: roleData.yearGroup,
     }
 
     // Cache for 30 seconds

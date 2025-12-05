@@ -32,6 +32,7 @@ public class HttpApiServer {
             server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/api/kick", new KickHandler());
             server.createContext("/api/ban", new BanHandler());
+            server.createContext("/api/register-complete", new RegisterCompleteHandler());
             server.setExecutor(Executors.newFixedThreadPool(2));
             server.start();
             plugin.getLogger().info("HTTP API server started on port " + port);
@@ -145,6 +146,61 @@ public class HttpApiServer {
                 });
                 
                 sendResponse(exchange, 200, "{\"success\": true, \"message\": \"Player banned\"}");
+            } catch (Exception e) {
+                sendResponse(exchange, 500, "{\"error\": \"" + e.getMessage() + "\"}");
+            }
+        }
+    }
+    
+    class RegisterCompleteHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (!"POST".equals(exchange.getRequestMethod())) {
+                sendResponse(exchange, 405, "{\"error\": \"Method not allowed\"}");
+                return;
+            }
+            
+            if (!validateApiKey(exchange)) {
+                sendResponse(exchange, 401, "{\"error\": \"Unauthorized\"}");
+                return;
+            }
+            
+            try {
+                String body = readRequestBody(exchange);
+                String username = extractJsonValue(body, "username");
+                
+                if (username == null || username.isEmpty()) {
+                    sendResponse(exchange, 400, "{\"error\": \"Username is required\"}");
+                    return;
+                }
+                
+                // Check if kick after register is enabled
+                boolean kickEnabled = plugin.getConfig().getBoolean("auth.kickAfterRegister", true);
+                
+                if (!kickEnabled) {
+                    sendResponse(exchange, 200, "{\"success\": true, \"message\": \"Kick disabled\"}");
+                    return;
+                }
+                
+                // Get kick messages from config
+                String kickTitle = plugin.getConfig().getString("auth.registerKickTitle", "&a&lRegistration Complete ✅");
+                String kickMessage = plugin.getConfig().getString("auth.registerKickMessage", 
+                    "&7This is normal.\\n&eRejoin and use &a/login &eto sign in to your new account.");
+                
+                // Execute kick on main thread
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    Player player = Bukkit.getPlayer(username);
+                    if (player != null) {
+                        // Use Adventure API for rich text
+                        Component kickComp = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+                            .legacyAmpersand()
+                            .deserialize(kickTitle + "\n\n" + kickMessage.replace("\\n", "\n"));
+                        player.kick(kickComp);
+                        plugin.getLogger().info("[MinecraftAuth] " + username + " kicked after registration (first-time setup)");
+                    }
+                });
+                
+                sendResponse(exchange, 200, "{\"success\": true, \"message\": \"Player kicked after registration\"}");
             } catch (Exception e) {
                 sendResponse(exchange, 500, "{\"error\": \"" + e.getMessage() + "\"}");
             }

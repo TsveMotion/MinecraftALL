@@ -57,6 +57,33 @@ public class PlayerJoinListener implements Listener {
             return;
         }
         
+        // Check if player has an active session from another server
+        if (plugin.getSessionManager() != null && plugin.getSessionManager().hasActiveSession(player.getUniqueId())) {
+            // Player has active session - auto-authenticate
+            plugin.addAuthenticatedPlayer(player.getUniqueId(), username);
+            LuckyPermsUtils.assignVerifiedRole(player);
+            
+            if (plugin.getTabListListener() != null) {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                    plugin.getTabListListener().updatePlayerTabList(player);
+                }, 5L);
+            }
+            
+            player.sendMessage(Component.text(""));
+            player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    .color(NamedTextColor.DARK_GRAY));
+            player.sendMessage(Component.text("✓ Auto-Authenticated")
+                    .color(NamedTextColor.GREEN));
+            player.sendMessage(Component.text("You're still logged in from your previous session!")
+                    .color(NamedTextColor.GRAY));
+            player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                    .color(NamedTextColor.DARK_GRAY));
+            player.sendMessage(Component.text(""));
+            
+            plugin.getLogger().info(username + " auto-authenticated via session (cross-server)");
+            return;
+        }
+        
         // Check if player is verified in database
         if (plugin.getDatabaseManager().isPlayerVerified(username)) {
             // Get player display data

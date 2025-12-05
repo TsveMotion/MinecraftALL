@@ -9,11 +9,15 @@ import com.minecraftauth.commands.RegisterCommand;
 import com.minecraftauth.commands.ReportCommand;
 import com.minecraftauth.commands.AuthReloadCommand;
 import com.minecraftauth.commands.TestRoleCommand;
+import com.minecraftauth.commands.SetupAuthCommand;
 import com.minecraftauth.database.DatabaseManager;
 import com.minecraftauth.listeners.PlayerFreezeListener;
 import com.minecraftauth.listeners.PlayerJoinListener;
+import com.minecraftauth.listeners.TabListListener;
+import com.minecraftauth.managers.SessionManager;
 import com.minecraftauth.managers.VerificationManager;
 import com.minecraftauth.proxy.ProxyMessenger;
+import com.minecraftauth.utils.FloodgateSupport;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
@@ -28,7 +32,9 @@ public class MinecraftAuthPlugin extends JavaPlugin {
     private DatabaseManager databaseManager;
     private HttpApiServer httpApiServer;
     private VerificationManager verificationManager;
+    private SessionManager sessionManager;
     private ProxyMessenger proxyMessenger;
+    private TabListListener tabListListener;
     private final Set<UUID> authenticatedPlayers = new HashSet<>();
     private final Set<String> authenticatedPlayerNames = new HashSet<>();
     
@@ -45,8 +51,14 @@ public class MinecraftAuthPlugin extends JavaPlugin {
             return;
         }
         
+        // Initialize Floodgate support for Bedrock players
+        FloodgateSupport.initialize();
+        
         // Initialize verification manager
         verificationManager = new VerificationManager(this);
+        
+        // Initialize session manager for cross-server auth
+        sessionManager = new SessionManager(this);
         
         // Initialize proxy messenger
         this.proxyMessenger = new ProxyMessenger(this);
@@ -64,10 +76,15 @@ public class MinecraftAuthPlugin extends JavaPlugin {
         getCommand("authreload").setExecutor(new AuthReloadCommand(this));
         getCommand("links").setExecutor(new LinksCommand(this));
         getCommand("testrole").setExecutor(new TestRoleCommand(this));
+        getCommand("setupauth").setExecutor(new SetupAuthCommand(this));
         
         // Register event listeners
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerFreezeListener(this), this);
+        
+        // Register TAB list listener for LuckPerms integration
+        this.tabListListener = new TabListListener(this);
+        getServer().getPluginManager().registerEvents(tabListListener, this);
         
         // Start HTTP API server
         httpApiServer = new HttpApiServer(this);
@@ -78,6 +95,9 @@ public class MinecraftAuthPlugin extends JavaPlugin {
     
     @Override
     public void onDisable() {
+        if (sessionManager != null) {
+            sessionManager.clearAllSessions();
+        }
         if (verificationManager != null) {
             verificationManager.shutdown();
         }
@@ -108,6 +128,14 @@ public class MinecraftAuthPlugin extends JavaPlugin {
         return verificationManager;
     }
     
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+    
+    public TabListListener getTabListListener() {
+        return tabListListener;
+    }
+    
     public Set<UUID> getAuthenticatedPlayers() {
         return authenticatedPlayers;
     }
@@ -134,6 +162,9 @@ public class MinecraftAuthPlugin extends JavaPlugin {
     public void removeAuthenticatedPlayer(UUID uuid, String name) {
         authenticatedPlayers.remove(uuid);
         authenticatedPlayerNames.remove(name);
+        
+        // NOTE: We do NOT invalidate session here - session persists across servers
+        // Sessions only expire after timeout or manual logout
         
         // Notify the proxy about the deauthentication
         Player player = getServer().getPlayer(uuid);

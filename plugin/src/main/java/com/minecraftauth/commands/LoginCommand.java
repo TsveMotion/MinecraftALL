@@ -84,15 +84,26 @@ public class LoginCommand implements CommandExecutor {
             // Assign verified role
             LuckyPermsUtils.assignVerifiedRole(player);
             
-            // Send success message
+            // Create session for cross-server auth (no re-login needed)
+            if (plugin.getSessionManager() != null) {
+                plugin.getSessionManager().createSession(player, username);
+            }
+            
+            // Update TAB list to show new rank
+            if (plugin.getTabListListener() != null) {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                    plugin.getTabListListener().updatePlayerTabList(player);
+                }, 5L);
+            }
+            
+            // Send success message from config
+            String loginMsg = plugin.getConfig().getString("auth.loginMessage", 
+                "&aLogged in ✅ — you can now use &e/server &ato switch realms.");
             player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                     .color(NamedTextColor.DARK_GRAY));
-            player.sendMessage(Component.text("✓ Login Successful!")
-                    .color(NamedTextColor.GREEN));
+            player.sendMessage(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().deserialize(loginMsg));
             player.sendMessage(Component.text("Welcome back, " + player.getName() + "!")
                     .color(NamedTextColor.YELLOW));
-            player.sendMessage(Component.text("You are now authenticated and can play freely!")
-                    .color(NamedTextColor.GRAY));
             player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                     .color(NamedTextColor.DARK_GRAY));
             
@@ -154,17 +165,26 @@ public class LoginCommand implements CommandExecutor {
         // Assign verified role
         LuckyPermsUtils.assignVerifiedRole(player);
         
-        // Send success message
+        // Create session for cross-server auth (no re-login needed)
+        if (plugin.getSessionManager() != null) {
+            plugin.getSessionManager().createSession(player, username);
+        }
+        
+        // Update TAB list to show new rank
+        if (plugin.getTabListListener() != null) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                plugin.getTabListListener().updatePlayerTabList(player);
+            }, 5L);
+        }
+        
+        // Send success message from config
+        String loginMsg = plugin.getConfig().getString("auth.loginMessage", 
+            "&aLogged in ✅ — you can now use &e/server &ato switch realms.");
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
                 .color(NamedTextColor.DARK_GRAY));
-        player.sendMessage(Component.text("✓ Login Successful with PIN!")
-                .color(NamedTextColor.GREEN));
+        player.sendMessage(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().deserialize(loginMsg));
         player.sendMessage(Component.text("Welcome back, " + player.getName() + "!")
                 .color(NamedTextColor.YELLOW));
-        player.sendMessage(Component.text("You are now authenticated and can play freely!")
-                .color(NamedTextColor.GRAY));
-        player.sendMessage(Component.text("")
-                .color(NamedTextColor.GRAY));
         player.sendMessage(Component.text("TIP: Next time you can use /login <password> instead.")
                 .color(NamedTextColor.AQUA));
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

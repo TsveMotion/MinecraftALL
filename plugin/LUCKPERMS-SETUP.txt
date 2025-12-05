@@ -1,0 +1,114 @@
+===============================================================================
+LUCKPERMS SETUP COMMANDS - ONE-TIME CONFIGURATION
+===============================================================================
+Run these commands in your Velocity proxy console (or backend if LP is there).
+Copy-paste each section carefully.
+
+IMPORTANT: Run these on the Velocity proxy if you want /server command control.
+If LuckPerms is on both proxy and backends, mirror key permissions appropriately.
+
+===============================================================================
+1. CREATE GROUPS & SET WEIGHTS
+===============================================================================
+lp creategroup default
+lp creategroup verified
+lp group default setweight 10
+lp group verified setweight 20
+
+===============================================================================
+2. SET GROUP META (PREFIXES)
+===============================================================================
+lp group default meta setprefix "&c[Unverified] &7"
+lp group verified meta setprefix "&a[Verified] &7"
+
+===============================================================================
+3. DEFAULT GROUP PERMISSIONS (TIGHT RESTRICTIONS)
+===============================================================================
+# Allow only essential commands
+lp group default permission set minecraft.command.help true
+lp group default permission set essentials.msg true
+lp group default permission set essentials.reply true
+lp group default permission set essentials.list true
+
+# Deny gameplay commands
+lp group default permission set minecraft.command.me false
+
+# CRITICAL: Deny /server command on proxy
+lp group default permission set velocity.command.server false
+
+# Allow MinecraftAuth commands
+lp group default permission set minecraftauth.command.register true
+lp group default permission set minecraftauth.command.login true
+
+===============================================================================
+4. VERIFIED GROUP PERMISSIONS (FULL ACCESS)
+===============================================================================
+# CRITICAL: Allow /server switching on proxy
+lp group verified permission set velocity.command.server true
+
+# Basic gameplay permissions
+lp group verified permission set minecraft.command.list true
+lp group verified permission set minecraft.command.me true
+
+# Essentials commands (adjust to your needs)
+lp group verified permission set essentials.spawn true
+lp group verified permission set essentials.home true
+lp group verified permission set essentials.sethome true
+lp group verified permission set essentials.tpa true
+lp group verified permission set essentials.tpahere true
+lp group verified permission set essentials.tpaccept true
+lp group verified permission set essentials.tpdeny true
+lp group verified permission set essentials.back true
+lp group verified permission set essentials.warp true
+lp group verified permission set essentials.warp.* true
+lp group verified permission set essentials.msg true
+lp group verified permission set essentials.reply true
+
+# Grant auth.verified permission (used by plugin)
+lp group verified permission set auth.verified true
+
+===============================================================================
+5. SET DEFAULT GROUP FOR NEW PLAYERS
+===============================================================================
+lp group default permission set luckperms.default true
+
+===============================================================================
+VERIFICATION
+===============================================================================
+After running these commands, verify:
+1. Check group weights: lp listgroups
+2. Check default group perms: lp group default info
+3. Check verified group perms: lp group verified info
+
+Test flow:
+1. Join as new player → should be in 'default' group
+2. Run /register → complete on website → kicked with message
+3. Rejoin → run /login → should be moved to 'verified' group
+4. Try /server command → should work now
+
+===============================================================================
+NOTES
+===============================================================================
+- If LP runs on BOTH proxy and backends, grant proxy permissions (velocity.*)
+  on the PROXY LP instance and gameplay perms on BACKEND LP instances.
+- Use LP's messaging feature to sync permissions across network:
+  In luckperms config, enable messaging (Redis/SQL recommended for production).
+- Adjust Essentials permissions based on your server's needs.
+- For admin users, create separate groups (e.g., 'admin', 'mod') with higher
+  weights and inheritance from 'verified'.
+
+===============================================================================
+TROUBLESHOOTING
+===============================================================================
+If /server is denied after login:
+  1. Check: lp user <playername> info
+  2. Verify Primary Group shows 'verified'
+  3. If it shows '(type: offline)', you're checking the wrong LP instance
+  4. Grant the permission on the correct side (proxy for /server)
+
+If player shows unverified after /login:
+  1. Check server logs for "Assigned verified role to <name>"
+  2. Run: lp user <playername> permission check auth.verified
+  3. Ensure MinecraftAuth plugin is running and LuckPerms API is loaded
+
+===============================================================================

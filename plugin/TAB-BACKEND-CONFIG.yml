@@ -1,0 +1,48 @@
+# TAB Plugin Configuration - Paper/Purpur Backend (Lobby/Survival)
+# Place this file in: lobby/plugins/TAB/config.yml and survival/plugins/TAB/config.yml
+# Keep minimal - let proxy handle header/footer and main formatting
+
+# Disable header/footer on backend (proxy handles it)
+header-footer:
+  enabled: false
+
+# Scoreboard (enable per-server if needed)
+scoreboard:
+  enabled: false
+
+# Use Bukkit permissions and LuckPerms integration
+use-bukkit-permissions: true
+assign-groups-by-permissions: true
+
+# Primary group detection order
+primary-group-finding-list:
+  - "verified"
+  - "default"
+
+# Group formatting (backup - proxy should handle)
+groups:
+  default:
+    tabprefix: "&c[Unverified] &7"
+    tagprefix: "&c[Unverified] &7"
+  verified:
+    tabprefix: "&a[Verified] &7"
+    tagprefix: "&a[Verified] &7"
+
+# NameTag features
+enable-nametag-features: true
+unlimited-nametag-mode:
+  enabled: true
+  dynamic-lines: []
+  static-lines: ["%luckperms-prefix%%player%%luckperms-suffix%"]
+
+# Belowname (disable)
+belowname-objective:
+  enabled: false
+
+# Yellow number (disable)
+yellow-number-in-tablist:
+  enabled: false
+
+# Placeholder refresh
+placeholderapi-refresh-intervals:
+  default-refresh-interval: 1000

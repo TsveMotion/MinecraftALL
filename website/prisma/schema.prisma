@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -73,8 +70,8 @@ model Report {
   id          Int      @id @default(autoincrement())
   reporterId  Int?     @map("reporter_id")
   reportedId  Int?     @map("reported_id")
-  reporter    String   @db.VarChar(16) // username
-  target      String   @db.VarChar(16) // username
+  reporter    String   @db.VarChar(16)
+  target      String   @db.VarChar(16)
   reason      String   @db.Text
   server      String?  @db.VarChar(100)
   status      String   @default("open") @db.VarChar(20)
@@ -137,7 +134,7 @@ model Role {
   symbol      String     @default("★") @db.VarChar(10)
   colorHex    String     @default("#FFFFFF") @map("color_hex") @db.VarChar(7)
   isFree      Boolean    @default(false) @map("is_free")
-  priceMinor  Int        @default(0) @map("price_minor") // in pence
+  priceMinor  Int        @default(0) @map("price_minor")
   isActive    Boolean    @default(true) @map("is_active")
   createdAt   DateTime   @default(now()) @map("created_at")
   updatedAt   DateTime   @default(now()) @updatedAt @map("updated_at")
@@ -154,7 +151,7 @@ model UserRole {
   userId    Int      @map("user_id")
   roleId    Int      @map("role_id")
   isPrimary Boolean  @default(false) @map("is_primary")
-  grantedBy Int?     @map("granted_by") // admin userId
+  grantedBy Int?     @map("granted_by")
   createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
